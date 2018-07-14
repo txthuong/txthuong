@@ -1,2 +1,0 @@
-Server=https://eu.airvantage.net
-Access_Token=f350c89a-3207-4ee4-8e26-610aaa516e5a
