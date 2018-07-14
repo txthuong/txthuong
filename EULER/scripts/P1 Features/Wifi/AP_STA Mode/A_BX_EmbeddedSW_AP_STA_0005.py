@@ -55,15 +55,12 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_AP_STA_0005"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "*****************************************************************************************************************"
@@ -83,35 +80,27 @@ try:
     SagSendAT(uart_com, 'AT+SRWCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\n+SRWCFG: 3,0,"%s","%s"\r\n' %(dut_mac_address_sta, dut_mac_address)], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    
-    print "\nStep 4: Setup Access Point with SSID 1 character\n"
-    SagSendAT(uart_com, 'AT+SRWAPCFG="a","%s",4,5,0,100\r' %wifi_password)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-    
-    print "\nStep 5: Execute command to query current AP configurations\n"
-    SagSendAT(uart_com, 'AT+SRWAPCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPCFG: "a","%s",4,5,0,100\r\n' %wifi_password],2000)
-    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    
-    print "\nStep 6: Setup Access Point with SSID 32 characters\n"
-    SagSendAT(uart_com, 'AT+SRWAPCFG="abc12345678912345678912345678912","%s",4,5,0,100\r' %wifi_password)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-    
-    print "\nStep 7: Execute command to query current AP configurations\n"
-    SagSendAT(uart_com, 'AT+SRWAPCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPCFG: "abc12345678912345678912345678912","%s",4,5,0,100\r\n' %wifi_password],2000)
-    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    
-    print "\nStep 8: Setup Access Point with SSID 33 characters\n"
-    SagSendAT(uart_com, 'AT+SRWAPCFG="abc123456789123456789123456789123","%s",4,5,0,100\r' %wifi_password)
-    SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 916\r\n'], 2000)
-    
-    print "\nStep 9: Execute command to query current AP configurations\n"
-    SagSendAT(uart_com, 'AT+SRWAPCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPCFG: "abc12345678912345678912345678912","%s",4,5,0,100\r\n' %wifi_password],2000)
-    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    
-    print "\nTest Steps completed\n"
+
+    # wifi_ssid has 40 characters
+    wifi_ssid_str = 'abcdefghij0123456789abcdefghij0123456789'
+
+    for i in range (1, len(wifi_ssid_str)):
+        wifi_ssid = wifi_ssid_str[0:i]
+        if i <= 32:
+            print "\nStep 4: Setup Access Point with SSID has %s characters\n" % len(wifi_ssid)
+            SagSendAT(uart_com, 'AT+SRWAPCFG="%s","%s",4,5,0,100\r' % (wifi_ssid, wifi_password))
+            SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+            print "\nStep 5: Execute command to query current AP configurations\n"
+            SagSendAT(uart_com, 'AT+SRWAPCFG?\r')
+            SagWaitnMatchResp(uart_com, ['\r\n+SRWAPCFG: "%s","%s",4,5,0,100\r\n' % (wifi_ssid, wifi_password)],2000)
+            SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
+        else:
+            print "\nStep 4: Setup Access Point with SSID has %s characters\n" % len(wifi_ssid)
+            SagSendAT(uart_com, 'AT+SRWAPCFG="%s","%s",4,5,0,100\r' % (wifi_ssid, wifi_password))
+            SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 916\r\n'], 2000)
+
+    print "\nTest Steps completed"
     
 except Exception, err_msg :
     VarGlobal.statOfItem = "NOK"
@@ -128,5 +117,13 @@ print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
 
-# Close UART, AUX1
+# Restore AP information to default
+SagSendAT(uart_com, 'AT+SRWAPCFG="BX31-200A6","eulerxyz",3,1,0,100\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+# Restore Wi-Fi mode to default
+SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+# Close UART
 SagClose(uart_com)

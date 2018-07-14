@@ -55,21 +55,20 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_AP_STA_0027"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "*****************************************************************************************************************"
     print "%s:Use command +SRWAPNETCFG to configure the start assigned IP address with Class B and use number 0 as host IP address" % test_ID
     print "*****************************************************************************************************************"
     
+    wifi_dhcp_gateway = '172.16.0.1'
+
     print "\nStep 1: Query default Operating Mode of module\n"
     SagSendAT(uart_com, 'AT+SRWCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\n+SRWCFG: 3,0,"%s","%s"\r\n' %(dut_mac_address_sta, dut_mac_address)], 2000)
@@ -85,11 +84,11 @@ try:
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 4: Enable DHCP with invalid values\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"172.16.0.254","172.16.0.0","172.16.0.99",720\r')
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.0","%s.99",720\r' % (wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 916\r\n'], 2000)
     
     print "\nStep 5: Enable DHCP with invalid values\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"172.16.0.254","172.16.0.0","172.16.0.0",720\r')
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.0","%s.0",720\r' % (wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 916\r\n'], 2000)
     
     print "\nTest Steps completed\n"
@@ -109,12 +108,17 @@ print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
 
-#Disable the DHCP server
-SagSendAT(uart_com, 'AT+SRWAPNETCFG=0\r')
+# Restore AP information to default
+SagSendAT(uart_com, 'AT+SRWAPCFG="BX31-200A6","eulerxyz",3,1,0,100\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-# Restore DUT
+# Restore NET configuration to default
+SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"192.168.4.1","192.168.4.2","192.168.4.101",120\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+# Restore Wi-Fi mode to default
 SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART
 SagClose(uart_com)

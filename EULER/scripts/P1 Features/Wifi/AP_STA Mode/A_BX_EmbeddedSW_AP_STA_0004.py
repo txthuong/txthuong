@@ -55,15 +55,12 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_AP_STA_0004"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "*****************************************************************************************************************"
@@ -84,6 +81,8 @@ try:
     SagWaitnMatchResp(uart_com, ['\r\n+SRWCFG: 3,3,"%s","%s"\r\n' %(dut_mac_address_sta, dut_mac_address)], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
+    wifi_ssid = 'Euler_Testing'
+
     print "\nStep 4: Setup Access Point configurations\n"
     SagSendAT(uart_com, 'AT+SRWAPCFG="%s","%s",4,5,0,100\r' %(wifi_ssid, wifi_password))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
@@ -93,7 +92,7 @@ try:
     response = SagWaitResp(uart_com, [''], 30000)
     if 'OK\r\n' not in response:
         raise Exception('\r\nFAIL\r\n')
-    
+
     print "\nTest Steps completed\n"
     
 except Exception, err_msg :
@@ -110,6 +109,10 @@ PRINT_TEST_RESULT(test_ID, VarGlobal.statOfItem)
 print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
+
+# Restore AP information to default
+SagSendAT(uart_com, 'AT+SRWAPCFG="BX31-200A6","eulerxyz",3,1,0,100\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Restore DUT
 SagSendAT(uart_com, 'AT+SRWCFG=3,0\r')

@@ -55,21 +55,20 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_AP_STA_0024"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "*****************************************************************************************************************"
     print "%s:Use command +SRWAPNETCFG to configure IP address of AP interface with Class B" % test_ID
     print "*****************************************************************************************************************"
     
+    wifi_dhcp_gateway = '172.16.0.1'
+
     print "\nStep 1: Query default Operating Mode of module\n"
     SagSendAT(uart_com, 'AT+SRWCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\n+SRWCFG: 3,0,"%s","%s"\r\n' %(dut_mac_address_sta, dut_mac_address)], 2000)
@@ -85,12 +84,12 @@ try:
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 4: Configure IP address of Access Point interface in class A\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"172.16.0.1","172.16.0.2","172.16.0.101",130\r')
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.2","%s.101",720\r' % (wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 5: Query DHCP configurations\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"172.16.0.1","172.16.0.2","172.16.0.101",130\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.101",720\r\n' % (wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 3000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nTest Steps completed\n"
@@ -110,12 +109,17 @@ print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
 
-#Disable the DHCP server
-SagSendAT(uart_com, 'AT+SRWAPNETCFG=0\r')
+# Restore AP information to default
+SagSendAT(uart_com, 'AT+SRWAPCFG="BX31-200A6","eulerxyz",3,1,0,100\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-# Restore DUT
+# Restore NET configuration to default
+SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"192.168.4.1","192.168.4.2","192.168.4.101",120\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+# Restore Wi-Fi mode to default
 SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART
 SagClose(uart_com)

@@ -55,15 +55,12 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_APmode_0019"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "*****************************************************************************************************************"
@@ -76,7 +73,7 @@ try:
     
     print "\nStep 2: Query current Wifi configuration \n"
     SagSendAT(uart_com, 'AT+SRWCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWCFG: 2,0,"%s","%s"\r\n' %(dut_stamac_address, dut_mac_address)], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWCFG: 2,0,"%s","%s"\r\n' %(dut_mac_address_sta, dut_mac_address)], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 3: Execute scanning command\n"

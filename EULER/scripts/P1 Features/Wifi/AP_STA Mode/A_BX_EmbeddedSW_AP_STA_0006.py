@@ -78,20 +78,19 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_AP_STA_0006"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "*****************************************************************************************************************"
     print "%s:Use command +SRWAPCFG to configure pass-key with mix characters (numbers, strings, special characters)" % test_ID
     print "*****************************************************************************************************************"
+    
+    wifi_ssid = "euler_testing"
     
     print "\nStep 1: Query default Operating Mode of module\n"
     SagSendAT(uart_com, 'AT+SRWCFG?\r')
@@ -108,28 +107,29 @@ try:
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 4: Setup Access Point with passkey mix characters\n"
-    SagSendAT(uart_com, 'AT+SRWAPCFG="%s","12345678x@X",4,5,0,100\r' %wifi_ssid)
+    wifi_password = '12345678x@X'
+    SagSendAT(uart_com, 'AT+SRWAPCFG="%s","%s",4,5,0,100\r' % (wifi_ssid, wifi_password))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 5: Execute command to query current AP configurations\n"
     SagSendAT(uart_com, 'AT+SRWAPCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPCFG: "%s","12345678x@X",4,5,0,100\r\n' %wifi_ssid],2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPCFG: "%s","%s",4,5,0,100\r\n' % (wifi_ssid, wifi_password)],2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 6: Execute command to enable DHCP with valid values\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"192.168.0.1","192.168.0.2","192.168.0.2",720\r' )
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.2","%s.102",720\r' % (wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 7: Use another module to connect to this Access Point\n"
-    SagSendAT(aux1_com, 'AT+SRWSTACFG="%s","12345678x@X",1\r' %wifi_ssid)
+    SagSendAT(aux1_com, 'AT+SRWSTACFG="%s","%s",1\r' % (wifi_ssid, wifi_password))
     SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 8: Connect to Access Point\n"
     SagSendAT(aux1_com, 'AT+SRWSTACON=1\r')
     SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
     SagWaitnMatchResp(aux1_com, ['\r\n+SRWSTASTATUS: 1,"%s","%s",5,3\r\n' % (wifi_ssid, dut_mac_address)], 2000 )
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRWSTAIP: "192.168.0.2","255.255.255.0","192.168.0.1"\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPSTA: 1,"%s"\r\n' % aux1_mac_address], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRWSTAIP: "%s.*","%s","%s"\r\n' % (return_subnet(wifi_dhcp_gateway), wifi_dhcp_subnet_mask, wifi_dhcp_gateway)], 3000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPSTA: 1,"%s"\r\n' % aux1_mac_address_sta], 2000)
     
     print "\nTest Steps completed\n"
     
@@ -150,15 +150,38 @@ print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
 
-#Disconnect
-SagSendAT(aux1_com, 'AT+SRWSTACFG="%s","12345678x@X",0\r' %wifi_ssid)
-SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
-
+# Disconnect to configured Access Point
 SagSendAT(aux1_com, 'AT+SRWSTACON=0\r')
 SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
 SagWaitnMatchResp(aux1_com, ['\r\n+SRWSTASTATUS: 0,8\r\n'], 2000)
-SagWaitnMatchResp(uart_com, ['\r\n+SRWAPSTA: 0,"%s"\r\n' % aux1_mac_address], 2000 )
+SagWaitnMatchResp(uart_com, ['\r\n+SRWAPSTA: 0,"%s"\r\n' %aux1_mac_address_sta], 3000)
+
+# Restore station connection information to default
+SagSendAT(aux1_com, 'AT+SRWSTACFG="","",1\r')
+SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
+
+# Restore NET configuration to default
+SagSendAT(aux1_com, 'AT+SRWSTANETCFG=1,"0.0.0.0","0.0.0.0","0.0.0.0"\r')
+SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
+
+# Restore Wi-Fi mode to default
+SagSendAT(aux1_com, 'AT+SRWCFG=3\r')
+SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
+
+# Restore AP information to default
+SagSendAT(uart_com, 'AT+SRWAPCFG="BX31-200A6","eulerxyz",3,1,0,100\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+# Restore NET configuration to default
+SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"192.168.4.1","192.168.4.2","192.168.4.101",120\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+# Restore Wi-Fi mode to default
+SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART
 SagClose(uart_com)
+
+# Close AUX
 SagClose(aux1_com)

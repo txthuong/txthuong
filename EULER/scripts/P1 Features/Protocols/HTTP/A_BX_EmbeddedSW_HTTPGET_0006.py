@@ -50,8 +50,7 @@ try:
     SagSendAT(uart_com, 'AT+SRWSTACON=1\r')
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     if SagWaitnMatchResp(uart_com, ['*\r\n+SRWSTASTATUS: 1,"%s","%s",*,*\r\n' % (wifi_ssid, wifi_mac_addr)], 20000):
-        resp = wait_and_check_ip_address(uart_com, ['\r\n+SRWSTAIP: "192.168.0.*","255.255.255.0","192.168.0.1"\r\n'], 3, 10000)
-        SagMatchResp(resp, ['\r\n+SRWSTAIP: "192.168.0.*","255.255.255.0","192.168.0.1"\r\n'])
+        SagWaitnMatchResp(uart_com, ['\r\n+SRWSTAIP: "%s.*","%s","%s"\r\n' % (return_subnet(wifi_dhcp_gateway), wifi_dhcp_subnet_mask, wifi_dhcp_gateway)], 10000)
     else:
         raise Exception("---->Problem: Module cannot connect to Wi-Fi !!!")
 
@@ -70,7 +69,6 @@ print "\n----- Test Body Start -----\n"
 # -----------------------------------------------------------------------------------
 
 test_ID = "A_BX_EmbeddedSW_HTTPGET_0006"
-VarGlobal.statOfItem = "OK"
 
 #######################################################################################
 #   START
@@ -78,8 +76,7 @@ VarGlobal.statOfItem = "OK"
 
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "***************************************************************************************************************"
@@ -102,16 +99,32 @@ try:
 
     print "\nStep 4: Perform +KHTTPGET"
     SagSendAT(uart_com, 'AT+KHTTPGET=1,"/"\r')
-    SagWaitnMatchResp(uart_com, ['\r\nCONNECT\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['HTTP/1.1 200 OK\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['*\r\nOK\r\n'], 2000)
+    if not SagWaitnMatchResp(uart_com, ['\r\nCONNECT\r\n'], 20000):
+        print 'Problem: Failed to check +KHTTPGET with non-80 port HTTP connection !!!\n'
+    else:
+        SagWaitnMatchResp(uart_com, ['HTTP/1.1 200 OK\r\n'], 2000)
+        SagWaitnMatchResp(uart_com, ['*\r\nOK\r\n'], 2000)
 
-    print "\nStep 5: Close HTTP connection"
+    print "\nStep 5: Query HTTP connection status"
+    SagSendAT(uart_com, 'AT+KHTTPCFG?\r')
+    SagWaitnMatchResp(uart_com, ['\r\n+KHTTPCFG: 1,,"%s",8090,0,,,1,0\r\n' % http_server], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+    print "\nStep 6: Close HTTP connection"
     SagSendAT(uart_com, 'AT+KHTTPCLOSE=1\r')
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-    print "\nStep 6: Delete HTTP configuration"
+    print "\nStep 7: Query HTTP connection status"
+    SagSendAT(uart_com, 'AT+KHTTPCFG?\r')
+    SagWaitnMatchResp(uart_com, ['\r\n+KHTTPCFG: 1,,"%s",8090,0,,,0,0\r\n' % http_server], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+    print "\nStep 8: Delete HTTP configuration"
     SagSendAT(uart_com, 'AT+KHTTPDEL=1\r')
+    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+    print "\nStep 9: Query HTTP configuration"
+    SagSendAT(uart_com, 'AT+KHTTPCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print "\nTest Steps completed\n"

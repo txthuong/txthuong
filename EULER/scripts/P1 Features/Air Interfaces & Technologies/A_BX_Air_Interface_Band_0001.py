@@ -13,6 +13,7 @@
 # -------------------------- DUT Initialization ----------------------------------
 
 test_environment_ready = "Ready"
+
 try:
 
     print "\n------------Test Environment check: Begin------------"
@@ -53,18 +54,15 @@ print "\n----- Test Body Start -----\n"
 # -----------------------------------------------------------------------------------
 # A_BX_Air_Interface_Band_0001
 # -----------------------------------------------------------------------------------
-test_nb=""
-test_ID = "A_BX_Air_Interface_Band_0001"
 
-VarGlobal.statOfItem = "OK"
+test_ID = "A_BX_Air_Interface_Band_0001"
 
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "***************************************************************************************************************"
@@ -90,8 +88,7 @@ try:
     SagSendAT(uart_com, 'AT+SRWSTACON=1\r')
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 3000)
     SagWaitnMatchResp(uart_com, ['\r\n+SRWSTASTATUS: 1,"%s","%s",*,*\r\n' % (wifi_ssid, wifi_mac_addr)], 10000)
-    answer = wait_and_check_ip_address(uart_com, ['\r\n+SRWSTAIP: "*.*.*.*","*.*.*.*","*.*.*.*"\r\n'], 3, 10000)
-    SagMatchResp = (answer, ['\r\n+SRWSTAIP: "*.*.*.*","*.*.*.*","*.*.*.*"\r\n'])
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWSTAIP: "%s.*","%s","%s"\r\n' % (return_subnet(wifi_dhcp_gateway), wifi_dhcp_subnet_mask, wifi_dhcp_gateway)], 10000)
 
     print "\nStep 6: Disconnect to configured Access Point\n"
     SagSendAT(uart_com, 'AT+SRWSTACON=0\r')
@@ -116,6 +113,14 @@ print "\n----- Test Body End -----\n"
 print "-----------Restore Settings---------------"
 
 # Restore DUT
+
+# Restore Station connection information to default
+SagSendAT(uart_com, 'AT+SRWSTACFG="","",1\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+# Restore Wi-Fi mode to default
+SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART
 SagClose(uart_com)

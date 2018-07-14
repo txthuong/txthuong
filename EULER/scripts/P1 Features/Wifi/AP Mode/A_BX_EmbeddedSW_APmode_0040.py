@@ -83,10 +83,14 @@ try:
     if test_environment_ready == "Not_Ready":
         VarGlobal.statOfItem = "NOK"
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
-
+    wifi_ssid = 'euler_testing'
     print "*****************************************************************************************************************"
     print "%s: Check that device supports DHCP sever when it's in Wifi AP mode" % test_ID
     print "*****************************************************************************************************************"
+    
+    wifi_ssid = 'euler_testing'
+    wifi_dhcp_subnet_mask = '255.255.255.0'
+    wifi_dhcp_gateway = '192.168.0.1' 
     
     print "\nStep 1: Execute command to enable module as Access Point mode\n"
     SagSendAT(uart_com, 'AT+SRWCFG=2\r')
@@ -102,12 +106,12 @@ try:
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 4: Set up DHCP\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"192.168.0.1","192.168.0.2","192.168.0.2",120\r')
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.2","%s.2",120\r' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 5: Query current DHCP setting\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"192.168.0.1","192.168.0.2","192.168.0.2",120\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.2",120\r\n' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 6: Enable AUX module  as Wi-Fi station\n"
@@ -121,9 +125,11 @@ try:
     print "\nStep 8: Connect to Access Point\n"
     SagSendAT(aux1_com, 'AT+SRWSTACON=1\r')
     SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRWSTASTATUS: 1,"%s","%s",11,3\r\n' % (wifi_ssid, dut_mac_address)], 2000 )
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRWSTAIP: "192.168.0.2","255.255.255.0","192.168.0.1"\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPSTA: 1,"%s"\r\n' % aux1_mac_address], 2000)
+    if SagWaitnMatchResp(aux1_com, ['*\r\n+SRWSTASTATUS: 1,"%s","%s",*,*\r\n' % (wifi_ssid, dut_mac_address)], 20000):
+        SagWaitnMatchResp(aux1_com, ['\r\n+SRWSTAIP: "%s.2","%s","%s"\r\n' % (return_subnet(wifi_dhcp_gateway), wifi_dhcp_subnet_mask, wifi_dhcp_gateway)], 10000)
+    else:
+        raise Exception("---->Problem: Module cannot connect to Wi-Fi !!!")
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPSTA: 1,"%s"\r\n' % aux1_mac_address_sta], 2000)
     print "\nTest Steps completed\n"
 except Exception, err_msg :
     VarGlobal.statOfItem = "NOK"
@@ -140,13 +146,18 @@ print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
 
+#Disable DHCP
+SagSendAT(uart_com, 'AT+SRWAPNETCFG=0\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+#Disconnect wifi 
 SagSendAT(aux1_com, 'AT+SRWSTACFG="%s","%s",0\r' %(wifi_ssid,wifi_password))
 SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
 
 SagSendAT(aux1_com, 'AT+SRWSTACON=0\r')
 SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
 SagWaitnMatchResp(aux1_com, ['\r\n+SRWSTASTATUS: 0,8\r\n'], 2000)
-SagWaitnMatchResp(uart_com, ['\r\n+SRWAPSTA: 0,"%s"\r\n' % aux1_mac_address], 2000 )
+SagWaitnMatchResp(uart_com, ['\r\n+SRWAPSTA: 0,"%s"\r\n' % aux1_mac_address_sta], 2000 )
 
 # Restore DUT
 SagSendAT(uart_com, 'AT+SRWCFG=3\r')

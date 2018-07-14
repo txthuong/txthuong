@@ -215,12 +215,18 @@ def check_enviroment():
 
 
 def update_cfg():
-    for field in ["UART_COM", "AUX1_COM", "AUX2_COM", "WIFI_SSID", "WIFI_MAC_ADDR", "WIFI_PASSWORD", "HTTP_SERVER", "HTTP_SERVER_IP_ADDRESS", "HTTPS_SERVER", "HTTPS_SERVER_IP_ADDRESS", "MQTT_SERVER", "TCP_SERVER", "UDP_SERVER", "DUT_MAC_ADDRESS", "AUX1_MAC_ADDRESS", "AUX2_MAC_ADDRESS", "DUT_BLUETOOTH_ADDRESS", "AUX1_BLUETOOTH_ADDRESS", "AUX2_BLUETOOTH_ADDRESS", "DUT_MAC_ADDRESS_STA", "AUX1_MAC_ADDRESS_STA", "HTTP_USER", "HTTP_PASSWORD", "HTTP_SERVER2", "HTTPS_SERVER2"]:
+    for field in ["UART_COM", "AUX1_COM", "AUX2_COM", "WIFI_SSID", "WIFI_MAC_ADDR", "WIFI_PASSWORD", "HTTP_SERVER", "HTTP_SERVER_IP_ADDRESS", "HTTPS_SERVER", "HTTPS_SERVER_IP_ADDRESS", "MQTT_SERVER", "TCP_SERVER","TCP_PORT", "UDP_SERVER","UDP_PORT", "DUT_MAC_ADDRESS", "AUX1_MAC_ADDRESS", "AUX2_MAC_ADDRESS", "DUT_BLUETOOTH_ADDRESS", "AUX1_BLUETOOTH_ADDRESS", "AUX2_BLUETOOTH_ADDRESS", "DUT_MAC_ADDRESS_STA", "AUX1_MAC_ADDRESS_STA", "HTTP_USER", "HTTP_PASSWORD", "HTTP_SERVER2", "HTTPS_SERVER2", "AVMS", "HTTPS_PORT", "WIFI_DHCP_GATEWAY", "WIFI_DHCP_SUBNET_MASK"]:
         try:
-            if field in os.environ:
+            if (field in os.environ) and ('AVMS' in field):
+                update_file(cfg_file_with_path, "^%s\s*=\s*\d*" %
+                            field, "%s = {%s}" % (field.lower(), os.environ[field]))
+                print "%s = %s" % (field, os.environ[field])
+                
+            elif field in os.environ:
                 update_file(cfg_file_with_path, "^%s\s*=\s*\d*" %
                             field, "%s = '%s'" % (field.lower(), os.environ[field]))
                 print "%s = %s" % (field, os.environ[field])
+                
         except Exception, e:
             print e
             traceback.print_exc()
@@ -1502,7 +1508,7 @@ def run(test_case_pool_dict):
         # traceback.print_exc()
         # print "\n---->Proble: exception comes up when update Expected Duration field in Test Plan !!!\n"
 
-    #    NOTE excel generate report start
+    # #    NOTE excel generate report start
     # print "\n\n----------------------------------------------------------------"
     # print "    Generate Excel report"
     # print "----------------------------------------------------------------\n\n"
@@ -1512,28 +1518,14 @@ def run(test_case_pool_dict):
         # wb = xlApp.Workbooks.Add()
         # sh = wb.sheets["Sheet1"]
 
-
-
-        
         # col_testName = 1
-        # col_instance = 2
-        # col_scriptName = 3
-        # col_owner = 4
-        # col_QcLastRun = 5
-        # col_QcIssueId = 6
-        # col_Platform = 7
-        # col_FwVersion = 8
-        # col_ModuleType = 9
-        # col_ModulRef = 10
-        # col_SIM = 11
-        # col_build = 12
-        # col_ResponsbileTester = 13
-        # col_thisRun_1 = 14
-        # col_thisRun_2 = 15
-        # col_thisRun_3 = 16
-        # col_thisRun_4 = 17
-        # col_thisRun_5 = 18
-        # col_ScriptRev = 19
+        # col_scriptName = 2
+        # col_owner = 3
+        # col_thisRun_1 = 4
+        # col_thisRun_2 = 5
+        # col_thisRun_3 = 6
+        # col_thisRun_4 = 7
+        # col_thisRun_5 = 8
 
         # sh.Cells(1, col_testName).Value = "Test Name"
         # sh.Cells(1, col_instance).Value = "Name"
@@ -1545,7 +1537,6 @@ def run(test_case_pool_dict):
         # sh.Cells(1, col_FwVersion).Value = "FW version"
         # sh.Cells(1, col_ModuleType).Value = "ModuleType"
         # sh.Cells(1, col_ModulRef).Value = "ModuleRef"
-        # sh.Cells(1, col_SIM).Value = "SIM"
         # sh.Cells(1, col_thisRun_1).Value = "Loop 1"
         # sh.Cells(1, col_thisRun_2).Value = "Loop 2"
         # sh.Cells(1, col_thisRun_3).Value = "Loop 3"
@@ -1643,22 +1634,22 @@ def run(test_case_pool_dict):
         # traceback.print_exc()
         # print "\n---->Problem: Fail to generate excel report !!!\n"
 
-    #    NOTE excel generate report end
+       # #NOTE excel generate report end
 
-    # try:
-        # temp_firmware_name = os.environ[
-            # 'Firmware_Under_Tested'].split("\\")[-1]
-        # print "\nDelete the temp firmware %s" % temp_firmware_name
-        # os.remove(r"C:\%s" % temp_firmware_name)
-    # except Exception, e:
-        # print e
-        # traceback.print_exc()
-        # print "---->Problem: fail to delete FW\n"
+    try:
+        temp_firmware_name = os.environ[
+            'Firmware_Under_Tested'].split("\\")[-1]
+        print "\nDelete the temp firmware %s" % temp_firmware_name
+        os.remove(r"C:\%s" % temp_firmware_name)
+    except Exception, e:
+        print e
+        traceback.print_exc()
+        print "---->Problem: fail to delete FW\n"
 
-    # if "Done" in os.environ['QC_Filter']:
-        # memo_purpose = "Official "
-    # else:
-        # memo_purpose = "1-Click-Checking"
+    if "Done" in os.environ['QC_Filter']:
+        memo_purpose = "Official "
+    else:
+        memo_purpose = "1-Click-Checking"
 
     print "\n\n*********************************************************************************************************************"
     print "                           One Click Test System End"

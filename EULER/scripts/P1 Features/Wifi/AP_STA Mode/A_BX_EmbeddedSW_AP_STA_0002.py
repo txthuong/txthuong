@@ -84,6 +84,8 @@ try:
     SagWaitnMatchResp(uart_com, ['\r\n+SRWCFG: 3,1,"%s","%s"\r\n' %(dut_mac_address_sta, dut_mac_address)], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
+    wifi_ssid = 'euler_testing'
+
     print "\nStep 4: Setup Access Point configurations\n"
     SagSendAT(uart_com, 'AT+SRWAPCFG="%s","%s",4,5,0,100\r' %(wifi_ssid, wifi_password))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
@@ -110,6 +112,10 @@ PRINT_TEST_RESULT(test_ID, VarGlobal.statOfItem)
 print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
+
+# Restore AP information to default
+SagSendAT(uart_com, 'AT+SRWAPCFG="BX31-200A6","eulerxyz",3,1,0,100\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Restore DUT
 SagSendAT(uart_com, 'AT+SRWCFG=3,0\r')

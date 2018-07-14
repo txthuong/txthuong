@@ -55,20 +55,19 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_APmode_0001"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "*****************************************************************************************************************"
     print "%s: Check Syntax of write +SRWAPCFG command with valid values, invalid values and values out of range." % test_ID
     print "*****************************************************************************************************************"
+    
+    wifi_ssid = 'euler_testing'
     
     print "\nStep 1: Execute command to enable module as Access Point mode\n"
     SagSendAT(uart1_com, 'AT+SRWCFG=2\r')

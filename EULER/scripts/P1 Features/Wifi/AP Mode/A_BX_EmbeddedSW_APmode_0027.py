@@ -50,20 +50,21 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_APmode_0027"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "*****************************************************************************************************************"
     print "%sUse command +SRWAPNETCFG to configure the end assigned IP address with Class A and use number 255 as host IP address" % test_ID
     print "*****************************************************************************************************************"
+    
+    wifi_ssid = 'euler_testing'
+    wifi_dhcp_subnet_mask = '255.255.255.0'
+    wifi_dhcp_gateway = '10.0.0.1' 
     
     print "\nStep 1: Execute command to enable module as Access Point mode\n"
     SagSendAT(uart_com, 'AT+SRWCFG=2\r')
@@ -75,20 +76,20 @@ try:
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 3: Enable DHCP with valid values\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"10.0.0.1","10.0.0.2","10.0.0.101",720\r')
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.2","%s.101",720\r' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 4: Enable DHCP with invalid values\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"10.0.0.1","10.0.0.255","10.0.0.255",720\r')
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.255","%s.255",720\r' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 916\r\n'], 2000)
     
     print "\nStep 5: Enable DHCP with invalid values\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"10.0.0.1","10.0.0.156","10.0.0.255",720\r')
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.156","%s.255",720\r' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 916\r\n'], 2000)
     
     print "\nStep 5: Execute command to query current DHCP setting\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"10.0.0.1","10.0.0.2","10.0.0.101",720\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.101",720\r\n' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nTest Steps completed\n"

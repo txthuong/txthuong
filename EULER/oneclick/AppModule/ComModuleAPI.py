@@ -54,12 +54,14 @@ import serial.tools.list_ports
 from CMW import CMW
 from VarGlobal import VERSION
 from WESH_LWM2M import AVMS2,activateSystem,createSystem,creatReport,deleteReport,findAllReport
+from EULER_LWM2M import AVMS3,activateSystem,createSystem,creatReport,deleteReport,findAllReport
 from SMS_API import *
 from Yocto import TARGET
 from ADB import ADB
 from TemperatureChamber import TEMPERATURE_CHAMBER
 import re
 from IPy import IP
+from TelnetUtil import TelnetUtil
 
 # Event to say MainFrame is closing
 #EventClosingMainFrame = SagCreateEvent("ClosingMainFrame")
@@ -3250,6 +3252,7 @@ def wait_and_check_ip_address(hCom, waitpattern, numberipaddress, timeout=60000,
     start_time = datetime.now()
     com_port_name = str(hCom.port)
     if log_msg == "debug":
+        #print start_time
         SafePrintLog(start_time)
     global uartbuffer
     flag_matchrsp = False
@@ -3275,12 +3278,18 @@ def wait_and_check_ip_address(hCom, waitpattern, numberipaddress, timeout=60000,
         if hCom.inWaiting()>0:
             uartbuffer[hCom.port] += hCom.read(hCom.inWaiting())
             if log_msg == "debug":
+                #VarGlobal.myColor = VarGlobal.colorLsit[7]
+                #print "Read data from UART buffer:", uartbuffer[hCom.port].replace("\r","<CR>").replace("\n","<LF>")
+                #print "Read data from UART buffer:", ascii2print(uartbuffer[hCom.port],printmode)
                 LogMsg = "Read data from UART buffer: "+ascii2print(uartbuffer[hCom.port],printmode)
                 SafePrintLog(LogMsg,7)
         # Match response
         # Loop for each character
         for (i,each_char) in enumerate(uartbuffer[hCom.port]) :
             if log_msg == "debug":
+                #VarGlobal.myColor = VarGlobal.colorLsit[7]
+                #print i, uartbuffer[hCom.port][:i+1].replace("\r","<CR>").replace("\n","<LF>").replace("\n","<LF>")
+                #print i, ascii2print(uartbuffer[hCom.port][:i+1],printmode)
                 LogMsg = str(i)+" "+ascii2print(uartbuffer[hCom.port][:i+1],printmode)
                 SafePrintLog(LogMsg,7)
             # display if matched with a line syntax
@@ -3294,7 +3303,11 @@ def wait_and_check_ip_address(hCom, waitpattern, numberipaddress, timeout=60000,
                 # display timestamp
                 if VarGlobal.SndRcvTimestamp:
                     timestamp = TimeDisplay() + " "
+                # display data
+                #VarGlobal.myColor = VarGlobal.colorLsit[7]
+                #received_data = displaybuffer.replace("\r","<CR>").replace("\n","<LF>").replace("\x15","<NAK>").replace("\x06","<ACK>").replace("\x00","<NULL>")
                 received_data = ascii2print(displaybuffer,printmode)
+                #print timestamp+"Rcv COM", com_port_name, "["+received_data+"]",
                 LogMsg = timestamp+"Rcv "+com_port_name+" ["+received_data+"] "
                 displaypointer = i+1
                 flag_printline = True
@@ -3314,6 +3327,8 @@ def wait_and_check_ip_address(hCom, waitpattern, numberipaddress, timeout=60000,
                     if VarGlobal.SndRcvTimestamp:
                         timestamp = TimeDisplay() + " "
                     # display data
+                    #VarGlobal.myColor = VarGlobal.colorLsit[7]
+                    #received_data = displaybuffer.replace("\r","<CR>").replace("\n","<LF>").replace("\x15","<NAK>").replace("\x06","<ACK>").replace("\x00","<NULL>")
                     received_data = ascii2print(displaybuffer,printmode)
                     #print "Rcv COM", com_port_name, "["+received_data+"]",
                     LogMsg = timestamp+"Rcv "+str(com_port_name)+" ["+received_data+"] "
@@ -3359,8 +3374,12 @@ def wait_and_check_ip_address(hCom, waitpattern, numberipaddress, timeout=60000,
             if len(displaybuffer)>0:
                 # display timestamp
                 if VarGlobal.SndRcvTimestamp:
+                    #VarGlobal.myColor = VarGlobal.colorLsit[7]
+                    #print TimeDisplay(),
                     timestamp = TimeDisplay() + " "
                 # display data
+                #VarGlobal.myColor = VarGlobal.colorLsit[7]
+                #received_data = receivedResp.replace("\r","<CR>").replace("\n","<LF>").replace("\x15","<NAK>").replace("\x06","<ACK>").replace("\x00","<NULL>")
                 received_data = ascii2print(receivedResp,printmode)
                 #print "Rcv COM", com_port_name, " ["+received_data+"]"
                 LogMsg = "Rcv "+str(com_port_name)+" ["+received_data+"]"
@@ -3392,7 +3411,6 @@ def wait_and_check_ip_address(hCom, waitpattern, numberipaddress, timeout=60000,
         if flag_timeout:
             break
 
-
     if log_msg == "debug":
         SafePrintLog("")
         SafePrintLog(str(len(uartbuffer[hCom.port])),7)
@@ -3407,8 +3425,55 @@ def wait_and_check_ip_address(hCom, waitpattern, numberipaddress, timeout=60000,
         except Exception, err_msg :
             VarGlobal.statOfItem = "NOK"
             print Exception, err_msg
-    return receivedResp
-            
+
+    match_result = SagMatchResp(receivedResp, waitpattern)
+#    return match_result
+
+def return_subnet(gateway_address):
+    tmp_array = gateway_address.split('.')
+    tmp_array.pop()
+    subnet_return = '.'.join(tmp_array)
+    return subnet_return
+
+def SagSendRemoteAT(hCom, session, cmd, mtu):
+    remote_cmd = []
+    i = 0
+    while len(cmd) >= (mtu-3)*i:
+        if len(cmd) < (mtu-3)*(i+1):
+            temp = cmd[(mtu-3)*i:len(cmd)]
+            temp = 'AT+SRBCSMARTCMD=%s,"' % session + temp.replace('"', '\\22') + '\\0d"'
+            remote_cmd.append(temp)
+        else:
+            temp = cmd[(mtu-3)*i:(mtu-3)*(i+1)]
+            temp = 'AT+SRBCSMARTCMD=%s,"' % session + temp.replace('"', '\\22') + '"'
+            remote_cmd.append(temp)
+        i = i+1
+    for c in remote_cmd:
+        SagSendAT(hCom, '%s\r' % c)
+        SagWaitnMatchResp(hCom, ['OK\r\n'], 2000)
+
+def SagWaitRemoteResp(hCom, session, timeout):
+    response = ''
+    while True:
+        temp = SagWaitResp(hCom, ['+SRBCSMARTRSP: %s,"*"\r\n' % session], 1000)
+        if temp != '':
+            SagMatchResp(temp, ['+SRBCSMARTRSP: %s,"*"\r\n' % session])
+            res = temp.split('"')[1]
+            response = response + res
+        else:
+            break
+    return response
+
+def SagWaitnMatchRemoteResp(hCom, session, waitpattern, timeout):
+    receivedResp = SagWaitRemoteResp(hCom, session, timeout)
+    temp_pattern = []
+    for i in range(0, len(waitpattern)):
+        temp = waitpattern[i].replace('\r\n', '\\0d\\0a').replace('"', '\\22')
+        temp_pattern.append(temp)
+    match_result = SagMatchResp(receivedResp, temp_pattern)
+    return match_result
+
+
 if __name__ == u'__main__':
         print get_ini_value ( r'C:\SVN\Configuration\SIM\CSL_3631.ini', "test", "test" )
     

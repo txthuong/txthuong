@@ -50,17 +50,16 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_APmode_0036"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
-
+        
+    wifi_ssid = 'euler_testing'
+    
     print "*****************************************************************************************************************"
     print "%s: Check command +SRWAPCFG is NOT persistent after module resets configuration" % test_ID
     print "*****************************************************************************************************************"
@@ -92,7 +91,7 @@ try:
     
     print "\nStep 6: Query network configuration\n"
     SagSendAT(uart_com, 'AT+SRWAPCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPCFG: "BX31-20034","eulerxyz",3,1,0,100\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPCFG: "*","eulerxyz",3,1,0,100\r\n'], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nTest Steps completed\n"

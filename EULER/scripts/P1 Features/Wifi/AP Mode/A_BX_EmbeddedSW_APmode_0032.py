@@ -50,45 +50,46 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_APmode_0032"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "*****************************************************************************************************************"
     print "%s: Use command +SRWAPNETCFG to configure the start and end assigned IP address with Class A (Ex: 10.0.0.2 - 10.0.0.102). The IP address pool size should be 101" % test_ID
     print "*****************************************************************************************************************"
     
+    wifi_ssid = 'euler_testing'
+    wifi_dhcp_subnet_mask = '255.255.255.0'
+    wifi_dhcp_gateway = '10.0.0.1' 
+    
     print "\nStep 1: Execute command to enable module as Access Point mode\n"
     SagSendAT(uart_com, 'AT+SRWCFG=2\r')
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 2: Enable DHCP with valid values\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"10.0.0.1","10.0.0.2","10.0.0.2",720\r')
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.2","%s.2",720\r' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 3: Enable DHCP with valid values\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"10.0.0.1","10.0.0.2","10.0.0.102",720\r')
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.2","%s.102",720\r' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 4: Query network configuration\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"10.0.0.1","10.0.0.2","10.0.0.102",720\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.102",720\r\n' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nStep 5: Re-configure DHCP with invalid values  (more than 101 IP address in DHCP IP pool)\n"
-    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"10.0.0.1","10.0.0.2","10.0.0.103",720\r')
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.2","%s.103",720\r' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\nERROR\r\n'], 2000)
     
     print "\nStep 6: Query network configuration\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"10.0.0.1","10.0.0.2","10.0.0.102",720\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.102",720\r\n' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     
     print "\nTest Steps completed\n"

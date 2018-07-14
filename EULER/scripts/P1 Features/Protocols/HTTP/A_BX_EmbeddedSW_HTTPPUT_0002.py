@@ -50,8 +50,7 @@ try:
     SagSendAT(uart_com, 'AT+SRWSTACON=1\r')
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
     if SagWaitnMatchResp(uart_com, ['*\r\n+SRWSTASTATUS: 1,"%s","%s",*,*\r\n' % (wifi_ssid, wifi_mac_addr)], 20000):
-        resp = wait_and_check_ip_address(uart_com, ['\r\n+SRWSTAIP: "192.168.0.*","255.255.255.0","192.168.0.1"\r\n'], 3, 10000)
-        SagMatchResp(resp, ['\r\n+SRWSTAIP: "192.168.0.*","255.255.255.0","192.168.0.1"\r\n'])
+        SagWaitnMatchResp(uart_com, ['\r\n+SRWSTAIP: "%s.*","%s","%s"\r\n' % (return_subnet(wifi_dhcp_gateway), wifi_dhcp_subnet_mask, wifi_dhcp_gateway)], 10000)
     else:
         raise Exception("---->Problem: Module cannot connect to Wi-Fi !!!")
 
@@ -70,7 +69,6 @@ print "\n----- Test Body Start -----\n"
 # -----------------------------------------------------------------------------------
 
 test_ID = "A_BX_EmbeddedSW_HTTPPUT_0002"
-VarGlobal.statOfItem = "OK"
 
 #######################################################################################
 #   START
@@ -78,8 +76,7 @@ VarGlobal.statOfItem = "OK"
 
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "***************************************************************************************************************"
@@ -102,51 +99,57 @@ try:
 
     print "\nStep 4: Check HTTP Header default state"
     SagSendAT(uart_com, 'AT+KHTTPHEADER?\r')
-    SagWaitnMatchResp(uart_com, ['*\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     data = 'This line is HTTPPUT data test..........'
 
     print "\nStep 5: Set HTTP header field"
-    Send_ESC = False
+    connected = False
     SagSendAT(uart_com, 'AT+KHTTPHEADER=1\r')
-    if not SagWaitnMatchResp(uart_com, ["\r\nCONNECT\r\n"], 3000):
-        print "\nPROBLEM: +KHTTPHEADER command does not send response CONNECT.\n"
-        Send_ESC = True
-    if not Send_ESC:
+    if SagWaitnMatchResp(uart_com, ["\r\nCONNECT\r\n"], 3000):
+        connected = True
         SagSendAT(uart_com, 'Content-Length: %d\r\n' % len(data))
         SagSendAT(uart_com,'+++\r')
-        if not SagWaitnMatchResp(uart_com, ["\r\nOK\r\n"], 3000):
-            print "\nPROBLEM: +KHTTPHEADER command does not return OK.\n"
-            Send_ESC = True
-    if Send_ESC:
-        SagSendAT(uart_com, '+++')
+        resp = SagWaitResp(uart_com, [''], 10000)
+        if not SagMatchResp(resp, ["\r\nOK\r\n"]):
+            if SagMatchResp(resp, ["*\r\nERROR\r\n", "*\r\n+CME ERROR: *\r\n"]):
+                print '\nPROBLEM: HTTP header was not set successfully\n'
+            else:
+                connected = False
+
+    if not connected:
+        print "\nPROBLEM: HTTP Header was not set properly.\n"
+        SagSendAT(uart_com, '+++\r')
         SagSleep(1500)
         if not SagWaitnMatchResp(uart_com, ["*\r\nOK\r\n", "*\r\nERROR\r\n", "*\r\n+CME ERROR: *\r\n"], 5000, update_result="not_critical"):
-            print "\nPROBLEM: +KHTTPHEADER command does not process +++ properly.\n"
+            raise Exception ('\nPROBLEM: +KHTTPHEADER command does not process +++ properly.\n')
+        SagSendAT(uart_com, 'AT\r')
+        if not SagWaitnMatchResp(uart_com, ["\r\nOK\r\n"], 20000):
+            SagSleep(300000)
+        raise Exception('\nFailed to execute command +KHTTPHEADER!!!\n')
 
     print "\nStep 6: Run +KHTTPPUT to send data to HTTP server"
-    Send_ESC = False
+    connected = False
     SagSendAT(uart_com, 'AT+KHTTPPUT=1,"/put"\r')
-    if not SagWaitnMatchResp(uart_com, ["\r\nCONNECT\r\n"], 20000):
-        print "\nPROBLEM: +KHTTPPUT command does not send response CONNECT.\n"
-        Send_ESC = True
-    else:
-        SagSendAT(uart_com, data)
+    if SagWaitnMatchResp(uart_com, ["\r\nCONNECT\r\n"], 20000):
+        connected = True
+        SagSendAT(uart_com, '%s' % data)
         SagSendAT(uart_com,'+++')
-    if not SagWaitnMatchResp(uart_com, ["HTTP/1.1 200 OK\r\n"], 30000):
-        print "\nPROBLEM: +KHTTPPUT command does not send HTTP protocol response.\n"
-        Send_ESC = True
-    if not SagWaitnMatchResp(uart_com, ['*"data": "%s"' % data], 30000):
-        print "\nPROBLEM: +KHTTPPUT command does not send HTTP PUT data returned.\n"
-        Send_ESC = True
-    if not SagWaitnMatchResp(uart_com, ["*\r\nOK\r\n"], 20000):
-        print "\nPROBLEM: +KHTTPPUT command does not send response OK.\n"
-        Send_ESC = True
-    if Send_ESC:
-        SagSendAT(uart_com, '+++')
+        if SagWaitnMatchResp(uart_com, ["HTTP/1.1 200 OK\r\n"], 30000):
+            SagWaitnMatchResp(uart_com, ['*"data":*"%s"' % data], 30000)
+            SagWaitnMatchResp(uart_com, ["*\r\nOK\r\n"], 20000)
+        else:
+            connected = False
+
+    if not connected:
+        SagSendAT(uart_com, '+++\r')
         SagSleep(1500)
         if not SagWaitnMatchResp(uart_com, ["*\r\nOK\r\n", "*\r\nERROR\r\n", "*\r\n+CME ERROR: *\r\n"], 5000, update_result="not_critical"):
-            print "\nPROBLEM: +KHTTPPUT command does not process +++ properly.\n"
+            raise Exception ('\nPROBLEM: +KHTTPPUT command does not process +++ properly.\n')
+        SagSendAT(uart_com, 'AT\r')
+        if not SagWaitnMatchResp(uart_com, ["\r\nOK\r\n"], 20000):
+            SagSleep(300000)
+        raise Exception('\nFailed to execute command +KHTTPPUT!!!\n')
 
     print "\nStep 7: Close HTTP connection"
     SagSendAT(uart_com, 'AT+KHTTPCLOSE=1\r')

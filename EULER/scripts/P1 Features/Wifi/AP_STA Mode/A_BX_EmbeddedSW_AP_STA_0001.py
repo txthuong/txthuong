@@ -55,16 +55,15 @@ print "\n----- Test Body Start -----\n"
 
 test_ID = "A_BX_EmbeddedSW_AP_STA_0001"
 
-VarGlobal.statOfItem = "OK"
-
 #######################################################################################
 #   START
 #######################################################################################
 try:
 
-    if test_environment_ready == "Not_Ready":
-        VarGlobal.statOfItem = "NOK"
+    if test_environment_ready == "Not_Ready" or VarGlobal.statOfItem == "NOK":
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
+
+    wifi_ssid = 'euler_testing'
 
     print "*****************************************************************************************************************"
     print "%s:Use command +SRWCFG to configure module works as AP and STA in parallel (default country)" % test_ID
@@ -110,6 +109,10 @@ PRINT_TEST_RESULT(test_ID, VarGlobal.statOfItem)
 print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
+
+# Restore AP information to default
+SagSendAT(uart_com, 'AT+SRWAPCFG="BX31-200A6","eulerxyz",3,1,0,100\r')
+SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Restore DUT
 SagSendAT(uart_com, 'AT+SRWCFG=3\r')
