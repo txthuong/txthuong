@@ -32,9 +32,12 @@ import pprint
 
 import pprint
 import os
+import pandas
+import warnings
 
 #*******************************************************************
 
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def Load():
     ##        autotest_pids = get_pids()
@@ -1663,7 +1666,46 @@ def run(test_case_pool_dict):
 
 
 ##########################################################################
-
+def get_test_case():
+    test_case_list = []
+    test_case_pool_dict = {}
+    df = pandas.read_excel('%s\\test_plan\\Euler_Test_Plan.xls' % os.environ['WORKSPACE'], sheetname='Test Plan')
+    Test_Cases = os.environ['Test_Cases']
+    test_cases_list_temp = []
+    for s in df.index:
+        if df['Automation Status'][s] == 'Full-Automation' :
+            if df['Scripts Status'][s] == 'Done' :
+                if df['1-Click Run'][s] == 'Yes' :
+                    if pandas.isnull(df['1-Click Result'][s]):
+                        test_cases_list_temp.append(df['Test name'][s])
+    if Test_Cases == 'Not Use':
+        test_case_list = test_cases_list_temp
+        test_case_pool_dict['%s' %test_case_list[0]] = {'Script':'%s.py' %test_case_list[0], 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}
+        test_case_list = iter(test_case_list)
+        next(test_case_list)
+        for test_case in test_case_list: 
+            test_case_pool_dict['%s' %test_case] = {'Script':'%s.py' %test_case, 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}
+    else:
+        if ' or ' in Test_Cases or ' OR ' in Test_Cases:
+            if ' or ' in Test_Cases:
+                list = Test_Cases.split(' or ')
+            if ' OR ' in Test_Cases:
+                list = Test_Cases.split(' OR ')
+            for tc in list:
+                if tc in test_cases_list_temp:
+                    test_case_list.append(tc)
+            test_case_pool_dict['%s' %test_case_list[0]] = {'Script':'%s.py' %test_case_list[0], 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}
+            test_case_list = iter(test_case_list)
+            next(test_case_list)
+            for test_case in test_case_list: 
+                test_case_pool_dict['%s' %test_case] = {'Script':'%s.py' %test_case, 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}
+        elif ' or ' not in Test_Cases or ' OR ' not in Test_Cases:
+            if Test_Cases in test_cases_list_temp:
+                test_case_list = Test_Cases
+                test_case_pool_dict = {'%s' %test_case_list: {'Script':'%s.py' %test_case_list, 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}}
+        else:
+            print '\nTest_Cases is not correct!!!\n'
+    return test_case_pool_dict
 
 def main():
 
@@ -1721,25 +1763,25 @@ def main():
     
     
     
-    
+
     #### vhoang ####################################################################################
-    Test_Cases = os.environ['Test_Cases']
-    test_case_pool_dict = {}
-    if ' or ' in Test_Cases or ' OR ' in Test_Cases:
-        if ' or ' in Test_Cases:
-            test_case_list = Test_Cases.split(' or ')
-        if ' OR ' in Test_Cases:
-            test_case_list = Test_Cases.split(' OR ')
-        test_case_pool_dict['%s' %test_case_list[0]] = {'Script':'%s.py' %test_case_list[0], 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}
-        test_case_list = iter(test_case_list)
-        next(test_case_list)
-        for test_case in test_case_list: 
-            test_case_pool_dict['%s' %test_case] = {'Script':'%s.py' %test_case, 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}
-    elif' or ' not in Test_Cases or ' OR ' not in Test_Cases:
-        test_case_list = Test_Cases
-        test_case_pool_dict = {'%s' %test_case_list: {'Script':'%s.py' %test_case_list, 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}}
-    else:
-        print '\nTest_Cases is not correct!!!\n'
+#    Test_Cases = os.environ['Test_Cases']
+#    test_case_pool_dict = {}
+#    if ' or ' in Test_Cases or ' OR ' in Test_Cases:
+#        if ' or ' in Test_Cases:
+#            test_case_list = Test_Cases.split(' or ')
+#        if ' OR ' in Test_Cases:
+#            test_case_list = Test_Cases.split(' OR ')
+#        test_case_pool_dict['%s' %test_case_list[0]] = {'Script':'%s.py' %test_case_list[0], 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}
+#        test_case_list = iter(test_case_list)
+#        next(test_case_list)
+#        for test_case in test_case_list: 
+#            test_case_pool_dict['%s' %test_case] = {'Script':'%s.py' %test_case, 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}
+#    elif' or ' not in Test_Cases or ' OR ' not in Test_Cases:
+#        test_case_list = Test_Cases
+#        test_case_pool_dict = {'%s' %test_case_list: {'Script':'%s.py' %test_case_list, 'result':{'loop1':{'status': '','link':''},'loop2':{'status': '','link':''},'loop3':{'status': '','link':''},'loop4':{'status': '','link':''},'loop5':{'status': '','link':''}}}}
+#    else:
+#        print '\nTest_Cases is not correct!!!\n'
                                 
     ################################################################################################
     
@@ -1750,6 +1792,8 @@ def main():
     # pprint.pprint(test_case_pool_dict)
 
     # NOTE execute testscript
+
+    test_case_pool_dict = get_test_case()
     run(test_case_pool_dict)
 
     # NOTE Process log
