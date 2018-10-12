@@ -1,9 +1,10 @@
 # Test Name                              Description
-# A_BX_EmbeddedSW_HTTPSGET_0016          Check that +KHTTPSGET works with a server by <cipher_suite> DES_CBC_SHA
+# A_BX_EmbeddedSW_HTTPSGET_0016          Check that +KHTTPSGET works with a server by <cipher_suite> TLS_DHE_RSA_WITH_AES_256_CCM
 #
 # Requirement
 #   1 Euler module
 #   1 AP running at 2.4GHz band
+#   1 HTTPS server supports TLS_DHE_RSA_WITH_AES_256_CCM
 #
 # Author: txthuong
 #
@@ -79,7 +80,7 @@ try:
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "***************************************************************************************************************"
-    print '%s: Check that +KHTTPSGET works with a server by <cipher_suite> DES_CBC_SHA' % test_ID
+    print '%s: Check that +KHTTPSGET works with a server by <cipher_suite> TLS_DHE_RSA_WITH_AES_256_CCM' % test_ID
     print "***************************************************************************************************************"
 
     # -------------------------- Start HTTPS server --------------------------------
@@ -87,10 +88,10 @@ try:
     tn = TelnetUtil()
     # Open a telnet session
     dest = tn.open_telnet_session(https_server_addr_telnet,https_server_telnet_port,https_server_telnet_login,https_server_telnet_password)
-    # Start HTTPS service
-    tn.stop_https(dest, https_port)
+    tn.stop_https(dest, int(https_port))
     SagSleep(5000)
-    https_cmd = 'cmd /c start python httpsd.py -x ./server.pem -c DES-CBC-SHA -p '+str(https_port)
+    # Start HTTPS service
+    https_cmd = 'cmd /c start httpd -f conf/httpd-TLS_DHE_RSA_WITH_AES_256_CCM.conf'
     tn.send_cmd(dest, 'cd '+https_server_httpsd_dir)
     SagSleep(1000)
     tn.send_cmd(dest, https_cmd)
@@ -102,11 +103,10 @@ try:
     SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-    supported_cipher_suite = (0,3)
-    all_cipher_suite = (0,1,2,3,4,5,6,7)
+    supported_cipher_suite = (0, 5)
 
-    print "\nCheck that +KHTTPSGET works with supported <cipher_suite> DES_CBC_SHA"
-    for cipher_suite in all_cipher_suite:
+    print "\nCheck that +KHTTPSGET works with HTTPS server supported <cipher_suite> TLS_DHE_RSA_WITH_AES_256_CCM"
+    for cipher_suite in range(0, 79):
         print "\nStep 2: Setting +KHTTPSCFG with <cipher_suite>: %d..." % cipher_suite
         SagSendAT(uart_com, 'AT+KHTTPSCFG=,%s,%s,1,%d\r' % (https_server2, https_port, cipher_suite))
         SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1\r\n'], 2000)
@@ -114,18 +114,18 @@ try:
 
         print "\nStep 3: Query HTTPS configuration"
         SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
-        SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,0,0\r\n' % (https_server2, https_port, cipher_suite)], 2000)
+        SagWaitnMatchResp(uart_com, ['+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,0,0,2,2\r\n' % (https_server2, https_port, cipher_suite)], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-        print "\nStep 4: Running +KHTTPSGET with <cipher_suite> %d..." % cipher_suite
+        print "\nStep 4: Perform +KHTTPSGET with <cipher_suite> %d..." % cipher_suite
         SagSendAT(uart_com, 'AT+KHTTPSGET=1,"/"\r')
         if cipher_suite in supported_cipher_suite:
             SagWaitnMatchResp(uart_com, ['\r\nCONNECT\r\n'], 5000)
-            SagWaitnMatchResp(uart_com, ['HTTP/1.0 200 OK\r\n'], 5000)
-            SagWaitnMatchResp(uart_com, ['*OK\r\n'], 5000)
+            SagWaitnMatchResp(uart_com, ['HTTP/1.1 200 OK\r\n'], 5000)
+            SagWaitnMatchResp(uart_com, ['*\r\nOK\r\n'], 5000)
             print "\nQuery HTTPS connection status"
             SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
-            SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,1,0\r\n' % (https_server2, https_port, cipher_suite)], 2000)
+            SagWaitnMatchResp(uart_com, ['+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,1,0,2,2\r\n' % (https_server2, https_port, cipher_suite)], 2000)
             SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
             print "\nClose HTTPS connection"
             SagSendAT(uart_com, "AT+KHTTPSCLOSE=1\r")
@@ -134,8 +134,8 @@ try:
             SagWaitnMatchResp(uart_com, ['\r\n+KHTTPS_ERROR: 1,12\r\n\r\nERROR\r\n'], 7000)
             print "\nQuery HTTPS connection status"
             SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
-            if not SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,0,0\r\n' % (https_server2, https_port, cipher_suite)], 2000):
-                print 'Problem: +KHTTPSGET work with unsupported <cipher_suite> HTTPS configuration !!!\n'
+            if not SagWaitnMatchResp(uart_com, ['+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,0,0,2,2\r\n' % (https_server2, https_port, cipher_suite)], 2000):
+                print 'Problem: +KHTTPSGET works with server by unsupported <cipher_suite> !!!\n'
                 SagSendAT(uart_com, "AT+KHTTPSCLOSE=1\r")
             SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
@@ -163,6 +163,9 @@ PRINT_TEST_RESULT(test_ID, VarGlobal.statOfItem)
 print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
+
+# Stop HTTPS service
+tn.stop_https(dest, int(https_port))
 
 # Disconnect to configured Access Point
 SagSendAT(uart_com, 'AT+SRWSTACON=0\r')

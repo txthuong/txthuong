@@ -83,9 +83,9 @@ try:
     print "%s: Check if GPIO can set or reset when it is configured no pull mode" % test_ID
     print "***************************************************************************************************************"
 
-    print "\nUse jumper to connect GPIO between 2 BX modules accordantly"
+    gpio = [2]
 
-    gpio = [16, 17, 27]
+    wx.MessageBox('Connect GPIO %s of 2 mdoules accordantly then click "OK"' % gpio, 'Info',wx.OK)
 
     for io in gpio:
         print '\nOn DUT'
@@ -106,7 +106,7 @@ try:
         print '\nOn AUX1'
         print "Step 4: Read value of GPIO %s on AUX1" % io
         SagSendAT(aux1_com, 'AT+KGPIO=%s,2\r' % io)
-        SagWaitnMatchResp(aux1_com, ['+KGPIO: %s,0\r\n' % io], 2000)
+        SagWaitnMatchResp(aux1_com, ['\r\n+KGPIO: %s,0\r\n' % io], 2000)
         SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
 
         print '\nOn DUT'
@@ -117,7 +117,7 @@ try:
         print '\nOn AUX1'
         print "Step 6: Read value of GPIO %s on AUX1" % io
         SagSendAT(aux1_com, 'AT+KGPIO=%s,2\r' % io)
-        SagWaitnMatchResp(aux1_com, ['+KGPIO: %s,1\r\n' % io], 2000)
+        SagWaitnMatchResp(aux1_com, ['\r\n+KGPIO: %s,1\r\n' % io], 2000)
         SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
 
         print '\nOn DUT'
@@ -128,7 +128,7 @@ try:
         print '\nOn AUX1'
         print "Step 8: Read value of GPIO %s on AUX1" % io
         SagSendAT(aux1_com, 'AT+KGPIO=%s,2\r' % io)
-        SagWaitnMatchResp(aux1_com, ['+KGPIO: %s,0\r\n' % io], 2000)
+        SagWaitnMatchResp(aux1_com, ['\r\n+KGPIO: %s,0\r\n' % io], 2000)
         SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
 
     print "\nTest Steps completed"

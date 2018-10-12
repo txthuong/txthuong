@@ -114,7 +114,7 @@ try:
     print "\nStep 5: Execute command to query current DHCP setting\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.2",720\r\n' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 6: Use another module to connect to this Access Point\n"
     SagSendAT(aux1_com, 'AT+SRWSTACFG="%s","%s",1\r' %(wifi_ssid, wifi_password))
@@ -161,10 +161,10 @@ SagSendAT(uart_com, 'AT+SRWSTANETCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Restore DUT
-SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagSendAT(uart_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-SagSendAT(aux1_com, 'AT+SRWCFG=3\r')
+SagSendAT(aux1_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART, AUX1

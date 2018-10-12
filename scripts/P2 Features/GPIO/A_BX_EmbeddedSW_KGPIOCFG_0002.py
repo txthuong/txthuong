@@ -66,7 +66,7 @@ try:
 
     print "\nStep 1: Check +KGPIOCFG test command"
     SagSendAT(uart_com, "AT+KGPIOCFG=?\r")
-    SagWaitnMatchResp(uart_com, ['+KGPIOCFG: (0-39),(0-1),(0-2)\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+KGPIOCFG: (0-39),(0-1),(0-2)\r\n'], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
 
     print "\nStep 2: Check +KGPIOCFG write command with unsupported parameter <n>"

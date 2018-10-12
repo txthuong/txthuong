@@ -1,5 +1,5 @@
 # Test Name                              Description
-# A_BX_EmbeddedSW_HTTPSHEAD_0008         Check that +KHTTPSHEAD works with a server by <cipher_suite> RC4-MD5
+# A_BX_EmbeddedSW_HTTPSHEAD_0008         Check that +KHTTPSHEAD does not work with a server by unsupported <cipher_suite>
 #
 # Requirement
 #   1 Euler module
@@ -79,7 +79,7 @@ try:
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "***************************************************************************************************************"
-    print '%s: Check that +KHTTPSHEAD works with a server by <cipher_suite> RC4-MD5' % test_ID
+    print '%s: Check that +KHTTPSHEAD does not work with a server by unsupported <cipher_suite>' % test_ID
     print "***************************************************************************************************************"
 
     # -------------------------- Start HTTPS server --------------------------------
@@ -90,7 +90,7 @@ try:
     # Start HTTPS service
     tn.stop_https(dest, https_port)
     SagSleep(5000)
-    https_cmd = 'cmd /c start python httpsd.py -x ./server.pem -c RC4-MD5 -p '+str(https_port)
+    https_cmd = 'cmd /c start python httpsd.py -x ./server.pem -c NULL-MD5 -p '+str(https_port)
     tn.send_cmd(dest, 'cd '+https_server_httpsd_dir)
     SagSleep(1000)
     tn.send_cmd(dest, https_cmd)
@@ -102,10 +102,9 @@ try:
     SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-    supported_cipher_suite = (0,1)
     all_cipher_suite = (0,1,2,3,4,5,6,7)
 
-    print "\nCheck that +KHTTPSHEAD works with supported <cipher_suite> RC4-MD5"
+    print "\nCheck that +KHTTPSHEAD does not work with a server by unsupported <cipher_suite>"
     for cipher_suite in all_cipher_suite:
         print "\nStep 2: Setting +KHTTPSCFG with <cipher_suite>: %d..." % cipher_suite
         SagSendAT(uart_com, 'AT+KHTTPSCFG=,%s,%s,1,%d\r' % (https_server2, https_port, cipher_suite))
@@ -119,25 +118,13 @@ try:
 
         print "\nStep 4: Running +KHTTPSHEAD with <cipher_suite> %d..." % cipher_suite
         SagSendAT(uart_com, 'AT+KHTTPSHEAD=1,"/"\r')
-        if cipher_suite in supported_cipher_suite:
-            SagWaitnMatchResp(uart_com, ['\r\nCONNECT\r\n'], 5000)
-            SagWaitnMatchResp(uart_com, ['HTTP/1.0 200 OK\r\n'], 5000)
-            SagWaitnMatchResp(uart_com, ['*OK\r\n'], 5000)
-            print "\nQuery HTTPS connection status"
-            SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
-            SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,1,0\r\n' % (https_server2, https_port, cipher_suite)], 2000)
-            SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-            print "\nClose HTTPS connection"
+        SagWaitnMatchResp(uart_com, ['\r\n+KHTTPS_ERROR: 1,12\r\n\r\nERROR\r\n'], 10000)
+        print "\nQuery HTTPS connection status"
+        SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
+        if not SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,0,0\r\n' % (https_server2, https_port, cipher_suite)], 2000):
+            print 'Problem: +KHTTPSHEAD work with server by unsupported cipher suite !!!\n'
             SagSendAT(uart_com, "AT+KHTTPSCLOSE=1\r")
-            SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-        else :
-            SagWaitnMatchResp(uart_com, ['\r\n+KHTTPS_ERROR: 1,12\r\n\r\nERROR\r\n'], 7000)
-            print "\nQuery HTTPS connection status"
-            SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
-            if not SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,0,0\r\n' % (https_server2, https_port, cipher_suite)], 2000):
-                print 'Problem: +KHTTPSHEAD works with server by unsupported <cipher_suite> !!!\n'
-                SagSendAT(uart_com, "AT+KHTTPSCLOSE=1\r")
-            SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+        SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
         print "\nStep 5: Delete the HTTPS connection"
         SagSendAT(uart_com, 'AT+KHTTPSDEL=1\r')

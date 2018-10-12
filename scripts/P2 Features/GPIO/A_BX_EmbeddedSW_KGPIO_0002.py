@@ -19,7 +19,7 @@ try:
     print "\n------------Test Environment check: Begin------------"
     # UART Initialization
     print "\nOpen AT Command port"
-    uart_com = SagOpen(uart_com, 115200, 8, "N", 1, "None")
+    uart_com = SagOpen(aux1_com, 115200, 8, "N", 1, "None")
 
     # Display DUT information
     print "\nDisplay DUT information"
@@ -66,13 +66,13 @@ try:
 
     print "\nStep 1: Check +KGPIO test command"
     SagSendAT(uart_com, "AT+KGPIO=?\r")
-    SagWaitnMatchResp(uart_com, ['+KGPIO: (0-39),(0-2)\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+KGPIO: (0-39),(0-2)\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
 
     print "\nStep 2: Request the current value of the <io>"
     for io in range(0, 39):
         SagSendAT(uart_com, 'AT+KGPIO=%s,2\r' % io)
-        SagWaitnMatchResp(uart_com, ['+KGPIO: %s,*\r\n' % io], 2000)
+        SagWaitnMatchResp(uart_com, ['\r\n+KGPIO: %s,*\r\n' % io], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print "\nTest Steps completed"

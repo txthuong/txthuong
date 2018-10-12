@@ -88,18 +88,18 @@ try:
 
     print "\nStep 2: Query Device Services general status"
     SagSendAT(uart_com, "AT+WDSG\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+WDSG: 0,3\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+WDSG: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+WDSG: 0,3'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+WDSG: 1,0'], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print "\nStep 3: Query Device Services configuration"
     SagSendAT(uart_com, 'AT+WDSC?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 0,0\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 1,0\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 2,0\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 3,0\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 4,15,60,240,960,2880,10080,10080\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 5,0\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 0,0'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 1,0'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 2,0'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 3,0'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 4,15,60,240,960,2880,10080,10080'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+WDSC: 5,0'], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print "\nStep 4: Initiate a connection to the Device Services server"

@@ -164,24 +164,24 @@ try:
     if not SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,1\r\nOK\r\n'], 5000):
         raise Exception("---->Problem: DUT cannot connect to AUX1 properly !!!")
     SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu1,'\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, mtu1)], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n+SRBCSMART: 1,1,1\r\n' % mtu1,'+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux1_max_mtu)], 2000)
     SagWaitnMatchResp(aux1_com, ['+SRBLE_IND: 1,1\r\n'], 2000)
     SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
-    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu1,'\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
+    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
 
-    mtu2 = min (aux1_max_mtu, dut_max_mtu)
+    mtu2 = min (aux2_max_mtu, dut_max_mtu)
 
     print '\nStep 6: Active BLE connection to AUX2'
     SagSendAT(uart_com, 'AT+SRBLECNX=2\r')
     if not SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 2,1\r\nOK\r\n'], 5000):
         raise Exception("---->Problem: DUT cannot connect to AUX2 properly !!!")
     SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 2,%s\r\n' % mtu2], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 2,%s\r\n\r\n+SRBCSMART: 2,1,1\r\n' % mtu2,'\r\n+SRBCSMART: 2,1,1\r\n+SRBLEMTU: 2,%s\r\n' % mtu2], 2000)
-    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, mtu2)], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 2,%s\r\n+SRBCSMART: 2,1,1\r\n' % mtu2,'+SRBCSMART: 2,1,1\r\n+SRBLEMTU: 2,%s\r\n' % mtu2], 2000)
+    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux2_max_mtu)], 2000)
     SagWaitnMatchResp(aux2_com, ['+SRBLE_IND: 1,1\r\n'], 2000)
     SagWaitnMatchResp(aux2_com, ['+SRBLEMTU: 1,%s\r\n' % mtu2], 2000)
-    SagWaitnMatchResp(aux2_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu2,'\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu2], 2000)
+    SagWaitnMatchResp(aux2_com, ['+SRBLEMTU: 1,%s\r\n' % mtu2], 2000)
 
     data_aux1 = 'Testing BLE on AUX1'
     data_aux2 = 'Testing BLE on AUX2'
@@ -200,13 +200,13 @@ try:
     print '\nStep 9: Close BLE connection'
     print 'On DUT...'
     SagSendAT(uart_com, "AT+SRBLECLOSE=1\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
     SagSendAT(uart_com, "AT+SRBLECLOSE=2\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 2,0\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 2,0,*\r\n'], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
 
     print '\nStep 10: Delete BLE configuration'
     print 'On DUT...'

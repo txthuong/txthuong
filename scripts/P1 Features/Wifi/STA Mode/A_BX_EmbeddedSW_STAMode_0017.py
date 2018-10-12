@@ -147,10 +147,10 @@ SagSendAT(uart_com, 'AT+SRWAPNETCFG=0\r' )
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Restore DUT
-SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagSendAT(uart_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-SagSendAT(aux1_com, 'AT+SRWCFG=3\r')
+SagSendAT(aux1_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART

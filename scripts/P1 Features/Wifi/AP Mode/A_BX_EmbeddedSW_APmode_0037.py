@@ -84,7 +84,7 @@ try:
     print "\nStep 5: Query current DHCP setting\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.101",720\r\n' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 6: Reset module\n"
     SagSendAT(uart_com, 'AT+RST\r')
@@ -96,7 +96,7 @@ try:
     print "\nStep 7: Query current DHCP setting\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.101",720\r\n' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nTest Steps completed\n"
 except Exception, err_msg :
@@ -119,7 +119,7 @@ SagSendAT(uart_com, 'AT+SRWAPNETCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Restore DUT
-SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagSendAT(uart_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART

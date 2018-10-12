@@ -122,7 +122,7 @@ try:
     print "\nStep 7: Execute command to query current DHCP setting\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.2",1\r\n' % (wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 3000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 8: Use another module to connect to this Access Point\n"
     SagSendAT(aux1_com, 'AT+SRWSTACFG="%s","%s",1\r' %(wifi_ssid, wifi_password))
@@ -179,19 +179,15 @@ SagSendAT(aux1_com, 'AT+SRWSTACFG="","",1\r')
 SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
 
 # Restore Wi-Fi mode to default
-SagSendAT(aux1_com, 'AT+SRWCFG=3\r')
+SagSendAT(aux1_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
-
-# Restore AP information to default
-SagSendAT(uart_com, 'AT+SRWAPCFG="BX31-200A6","eulerxyz",3,1,0,100\r')
-SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Disable DHCP
 SagSendAT(uart_com, 'AT+SRWAPNETCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Restore Wi-Fi mode to default
-SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagSendAT(uart_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART

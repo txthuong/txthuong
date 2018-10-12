@@ -116,8 +116,7 @@ try:
     print '\nOn DUT...'
     print 'Step 2: Send data with not configured session'
     SagSendAT(uart_com, 'AT+SRBCSMARTSEND=1,0,"%s"\r' % data)
-    # BX310x : Should be +CME ERROR: 910
-    SagWaitnMatchResp(uart_com, ['\r\nERROR\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 910\r\n'], 2000)
 
     print '\nStep 3: Configure an BLE connection to AUX1'
     SagSendAT(uart_com, 'AT+SRBLECFG=%s\r' % aux1_bluetooth_address)
@@ -126,8 +125,7 @@ try:
 
     print '\nStep 4: Send data with not actived session'
     SagSendAT(uart_com, 'AT+SRBCSMARTSEND=1,0,"%s"\r' % data)
-    # BX310x : Should be +CME ERROR: 910
-    SagWaitnMatchResp(uart_com, ['\r\nERROR\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 922\r\n'], 2000)
 
     mtu = min (aux1_max_mtu, dut_max_mtu)
 
@@ -136,11 +134,11 @@ try:
     if not SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,1\r\nOK\r\n'], 5000):
         raise Exception("---->Problem: DUT cannot connect to AUX1 properly !!!")
     SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu,'\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, mtu)], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n+SRBCSMART: 1,1,1\r\n' % mtu,'+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux1_max_mtu)], 2000)
     SagWaitnMatchResp(aux1_com, ['+SRBLE_IND: 1,1\r\n'], 2000)
     SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
-    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu,'\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
+    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
 
     print '\nStep 6: Send data to AUX1 with connected session'
     SagSendAT(uart_com, 'AT+SRBCSMARTSEND=1,0,"%s"\r' % data)
@@ -150,9 +148,9 @@ try:
     print '\nStep 7: Close BLE connection'
     print 'On DUT...'
     SagSendAT(uart_com, "AT+SRBLECLOSE=1\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
 
     print '\nStep 8: Delete BLE configuration'
     print 'On DUT...'

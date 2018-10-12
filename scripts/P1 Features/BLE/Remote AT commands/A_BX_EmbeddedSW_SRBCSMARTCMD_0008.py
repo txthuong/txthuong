@@ -164,11 +164,11 @@ try:
     if not SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,1\r\nOK\r\n'], 5000):
         raise Exception("---->Problem: DUT cannot connect to AUX1 properly !!!")
     SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu1, '\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, mtu1)], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n+SRBCSMART: 1,1,1\r\n' % mtu1, '+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux1_max_mtu)], 2000)
     SagWaitnMatchResp(aux1_com, ['+SRBLE_IND: 1,1\r\n'], 2000)
     SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
-    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu1, '\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
+    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
 
     mtu2 = min(aux2_max_mtu, dut_max_mtu)
 
@@ -177,11 +177,11 @@ try:
     if not SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 2,1\r\nOK\r\n'], 5000):
         raise Exception("---->Problem: DUT cannot connect to AUX2 properly !!!")
     SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 2,%s\r\n' % mtu2], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 2,%s\r\n\r\n+SRBCSMART: 2,1,1\r\n' % mtu2, '\r\n+SRBCSMART: 2,1,1\r\n+SRBLEMTU: 2,%s\r\n' % mtu2], 2000)
-    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, mtu2)], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 2,%s\r\n+SRBCSMART: 2,1,1\r\n' % mtu2, '+SRBCSMART: 2,1,1\r\n+SRBLEMTU: 2,%s\r\n' % mtu2], 2000)
+    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux2_max_mtu)], 2000)
     SagWaitnMatchResp(aux2_com, ['+SRBLE_IND: 1,1\r\n'], 2000)
     SagWaitnMatchResp(aux2_com, ['+SRBLEMTU: 1,%s\r\n' % mtu2], 2000)
-    SagWaitnMatchResp(aux2_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu2, '\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu2], 2000)
+    SagWaitnMatchResp(aux2_com, ['+SRBLEMTU: 1,%s\r\n' % mtu2], 2000)
 
     print '\nOn AUX1...'
     print 'Step 7: Enable remote control'
@@ -200,13 +200,13 @@ try:
     print '\nOn DUT...'
     print 'Step 9: Send command to AUX1'
     SagSendRemoteAT(uart_com, 1, command, mtu1)
-    SagWaitnMatchResp(aux1_com, ['+SRREMCMD: "%s"\r' % command.replace('"', '\\22')], 2000)
+    SagWaitnMatchResp(aux1_com, ['+SRREMCMD: "%s"\r\n' % command.replace('"', '\\22')], 2000)
     SagWaitnMatchResp(aux1_com, expected_resp_1, 2000)
     SagWaitnMatchRemoteResp(uart_com, 1, expected_resp_1, 5000)
 
     print '\nStep 10: Send command to AUX2'
     SagSendRemoteAT(uart_com, 2, command, mtu2)
-    SagWaitnMatchResp(aux2_com, ['+SRREMCMD: "%s"\r' % command.replace('"', '\\22')], 2000)
+    SagWaitnMatchResp(aux2_com, ['+SRREMCMD: "%s"\r\n' % command.replace('"', '\\22')], 2000)
     SagWaitnMatchResp(aux2_com, expected_resp_2, 2000)
     SagWaitnMatchRemoteResp(uart_com, 2, expected_resp_2, 5000)
 
@@ -223,13 +223,13 @@ try:
     print '\nStep 13: Close BLE connection'
     print 'On DUT...'
     SagSendAT(uart_com, "AT+SRBLECLOSE=1\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
     SagSendAT(uart_com, "AT+SRBLECLOSE=2\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 2,0\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 2,0,*\r\n'], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
 
     print '\nStep 14: Delete BLE configuration'
     print 'On DUT...'

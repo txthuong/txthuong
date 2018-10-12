@@ -1,9 +1,10 @@
-# Test Name                                     Description
-# A_BX_EmbeddedSW_HTTPSGET_0020                 Check that HTTPS client can get server data 10000 times
+# Test Name                              Description
+# A_BX_EmbeddedSW_HTTPSGET_0020          Check that +KHTTPSGET works with a server by <cipher_suite> TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
 #
 # Requirement
 #   1 Euler module
 #   1 AP running at 2.4GHz band
+#   1 HTTPS server supports TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA
 #
 # Author: txthuong
 #
@@ -17,7 +18,6 @@ test_environment_ready = "Ready"
 try:
 
     print "\n------------Test Environment check: Begin------------"
-
     # UART Initialization
     print "\nOpen AT Command port"
     uart_com = SagOpen(uart_com, 115200, 8, "N", 1, "None")
@@ -80,50 +80,71 @@ try:
         raise Exception("---->Problem: Test Environment Is Not Ready !!!")
 
     print "***************************************************************************************************************"
-    print '%s: Check that HTTPS client can get server data 10000 times' % test_ID
+    print '%s: Check that +KHTTPSGET works with a server by <cipher_suite> TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA' % test_ID
     print "***************************************************************************************************************"
 
+    # -------------------------- Start HTTPS server --------------------------------
+
+    tn = TelnetUtil()
+    # Open a telnet session
+    dest = tn.open_telnet_session(https_server_addr_telnet,https_server_telnet_port,https_server_telnet_login,https_server_telnet_password)
+    tn.stop_https(dest, int(https_port))
+    SagSleep(5000)
+    # Start HTTPS service
+    https_cmd = 'cmd /c start httpd -f conf/httpd-TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA.conf'
+    tn.send_cmd(dest, 'cd '+https_server_httpsd_dir)
+    SagSleep(1000)
+    tn.send_cmd(dest, https_cmd)
+    SagSleep(5000)
+
+    # ------------------------------------------------------------------------------
+
     print "\nStep 1: Query HTTPS configuration"
-    SagSendAT(uart_com, 'AT+KHTTPCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-
-    print "\nStep 2: Configure a HTTPS connection by plain domain name"
-    SagSendAT(uart_com, 'AT+KHTTPSCFG=,%s\r' % https_server)
-    SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-
-    print "\nStep 3: Query HTTPS configuration"
     SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1,,"%s",443,0,0,1,,,0,0\r\n' % https_server], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-    print "\nStep 4: Perform +KHTTPSGET to get server data 10000 times"
-    for loop in range(1, 10001):
-        print '\nLoop %s ...' % loop
-        SagSendAT(uart_com, 'AT+KHTTPSGET=1,"/get?param=%s"\r' % loop)
-        SagWaitnMatchResp(uart_com, ['\r\nCONNECT\r\n'], 5000)
-        SagWaitnMatchResp(uart_com, ['HTTP/1.1 200 OK\r\n'], 5000)
-        SagWaitnMatchResp(uart_com, ['*"param": "%s"' % loop], 5000)
-        SagWaitnMatchResp(uart_com, ['*\r\nOK\r\n'], 5000)
-        if VarGlobal.statOfItem == "NOK":
-            break
+    supported_cipher_suite = (0, 9)
 
-    print "\nStep 5: Query HTTPS connection status"
+    print "\nCheck that +KHTTPSGET works with HTTPS server supported <cipher_suite> TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA"
+    for cipher_suite in range(0, 79):
+        print "\nStep 2: Setting +KHTTPSCFG with <cipher_suite>: %d..." % cipher_suite
+        SagSendAT(uart_com, 'AT+KHTTPSCFG=,%s,%s,1,%d\r' % (https_server2, https_port, cipher_suite))
+        SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1\r\n'], 2000)
+        SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+        print "\nStep 3: Query HTTPS configuration"
+        SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
+        SagWaitnMatchResp(uart_com, ['+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,0,0,2,2\r\n' % (https_server2, https_port, cipher_suite)], 2000)
+        SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+        print "\nStep 4: Perform +KHTTPSGET with <cipher_suite> %d..." % cipher_suite
+        SagSendAT(uart_com, 'AT+KHTTPSGET=1,"/"\r')
+        if cipher_suite in supported_cipher_suite:
+            SagWaitnMatchResp(uart_com, ['\r\nCONNECT\r\n'], 5000)
+            SagWaitnMatchResp(uart_com, ['HTTP/1.1 200 OK\r\n'], 5000)
+            SagWaitnMatchResp(uart_com, ['*\r\nOK\r\n'], 5000)
+            print "\nQuery HTTPS connection status"
+            SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
+            SagWaitnMatchResp(uart_com, ['+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,1,0,2,2\r\n' % (https_server2, https_port, cipher_suite)], 2000)
+            SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+            print "\nClose HTTPS connection"
+            SagSendAT(uart_com, "AT+KHTTPSCLOSE=1\r")
+            SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+        else :
+            SagWaitnMatchResp(uart_com, ['\r\n+KHTTPS_ERROR: 1,12\r\n\r\nERROR\r\n'], 7000)
+            print "\nQuery HTTPS connection status"
+            SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
+            if not SagWaitnMatchResp(uart_com, ['+KHTTPSCFG: 1,,"%s",%s,1,%d,1,,,0,0,2,2\r\n' % (https_server2, https_port, cipher_suite)], 2000):
+                print 'Problem: +KHTTPSGET works with server by unsupported <cipher_suite> !!!\n'
+                SagSendAT(uart_com, "AT+KHTTPSCLOSE=1\r")
+            SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+        print "\nStep 5: Delete the HTTPS connection"
+        SagSendAT(uart_com, 'AT+KHTTPSDEL=1\r')
+        SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+
+    print "\nStep 6: Query HTTPS configuration"
     SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1,,"%s",443,0,0,1,,,1,0\r\n' % https_server], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-
-    print "\nStep 6: Close HTTPS connection"
-    SagSendAT(uart_com, 'AT+KHTTPSCLOSE=1\r')
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-
-    print "\nStep 7: Query HTTPS connection status"
-    SagSendAT(uart_com, 'AT+KHTTPSCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+KHTTPSCFG: 1,,"%s",443,0,0,1,,,0,0\r\n' % https_server], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-
-    print "\nStep 8: Delete HTTPS configuration"
-    SagSendAT(uart_com, 'AT+KHTTPSDEL=1\r')
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print "\nTest Steps completed\n"
@@ -142,6 +163,9 @@ PRINT_TEST_RESULT(test_ID, VarGlobal.statOfItem)
 print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
+
+# Stop HTTPS service
+tn.stop_https(dest, int(https_port))
 
 # Disconnect to configured Access Point
 SagSendAT(uart_com, 'AT+SRWSTACON=0\r')

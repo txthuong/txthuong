@@ -64,7 +64,7 @@ try:
     print "%s: BX module should play the role as Access Point that smart phone can access to" % test_ID
     print "***********************************************************************************************************************"
 
-    print "\nStep 1: Configures module as Access Point mode\n"
+    print "\nStep 1: Configures module as Access Point mode"
     SagSendAT(uart_com, "AT+SRWCFG=2\r")
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
@@ -72,17 +72,17 @@ try:
     wifi_password = '12345678'
     wifi_dhcp_gateway = '192.168.100.1'
 
-    print "\nStep 2: Configures the Access Point information\n"
+    print "\nStep 2: Configures the Access Point information"
     SagSendAT(uart_com, 'AT+SRWAPCFG="%s","%s",4,5,0,100\r' % (wifi_ssid, wifi_password))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-    print "\nStep 3: Configures the network for AP interface\n"
-    SagSendAT(aux1_com, 'AT+SRWAPNETCFG=1,"%s","%s.2","%s.101",720\r' % (wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
+    print "\nStep 3: Configures the network for AP interface"
+    SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.2","%s.101",720\r' % (wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-    wx.MessageBox('Use SmartPhone to connect to SSID "Euler_Smartphone" then click "OK"', 'Info',wx.OK)
+    wx.MessageBox('Use SmartPhone to connect to SSID "%s" with password "%s" then click "OK"' % (wifi_ssid, wifi_password), 'Info',wx.OK)
 
-    print "\nStep 4: Check response message on module\n"
+    print "\nStep 4: Check response message on module"
     SagWaitnMatchResp(uart_com, ['\r\n+SRWAPSTA: 1,"*:*:*:*:*:*"\r\n'], 2000)
 
     print "\nTest Steps completed"

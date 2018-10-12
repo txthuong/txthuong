@@ -87,13 +87,13 @@ try:
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print "\nStep 2: Configure a MQTT connection"
-    SagSendAT(uart_com, 'AT+KMQTTCFG=0,"%s",%s,4,"BX_2401",60,1,1,"TMA/Euler","BX_2401 offline",0,0,"X2745400032401","1_Abc_123"\r' % (mqtt_server, mqtt_port))
+    SagSendAT(uart_com, 'AT+KMQTTCFG=0,"%s",%s,4,"BX_2401",60,1,1,"TMA/Euler","BX_2401 offline",0,0,"%s","%s"\r' % (mqtt_server, mqtt_port, mqtt_user, mqtt_password))
     SagWaitnMatchResp(uart_com, ['\r\n+KMQTTCFG: 1\r\n'], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print "\nStep 3: Query MQTT connection configuration"
     SagSendAT(uart_com, 'AT+KMQTTCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+KMQTTCFG: 1,"%s",%s,4,"BX_2401",60,1,1,"TMA/Euler","BX_2401 offline",0,0,"X2745400032401","1_Abc_123"\r\n' % (mqtt_server, mqtt_port)], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+KMQTTCFG: 1,"%s",%s,4,"BX_2401",60,1,1,"TMA/Euler","BX_2401 offline",0,0,"%s","%s"\r\n' % (mqtt_server, mqtt_port, mqtt_user, mqtt_password)], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print "\nStep 4: Check +KMQTTCNX test command"
@@ -130,7 +130,7 @@ try:
 
     print "\nStep 11: Check +KMQTTCNX write command with valid parameter"
     SagSendAT(uart_com, 'AT+KMQTTCNX=1\r')
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 10000)
 
     print "\nStep 12: Close the MQTT connection"
     SagSendAT(uart_com, 'AT+KMQTTCLOSE=1\r')

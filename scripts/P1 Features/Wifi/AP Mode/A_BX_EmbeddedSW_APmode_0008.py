@@ -114,7 +114,7 @@ print "\n----- Test Body End -----\n"
 print "-----------Restore Settings---------------"
 
 # Restore DUT
-SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagSendAT(uart_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART

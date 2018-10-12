@@ -124,14 +124,14 @@ try:
     if not SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,1\r\nOK\r\n'], 5000):
         raise Exception("---->Problem: DUT cannot connect to AUX1 properly !!!")
     SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu, '\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, mtu)], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n+SRBCSMART: 1,1,1\r\n' % mtu, '+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux1_max_mtu)], 2000)
     SagWaitnMatchResp(aux1_com, ['+SRBLE_IND: 1,1\r\n'], 2000)
     SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
-    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu, '\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
+    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
 
     command = 'AT+FMM'
-    expect_response = ['\r\nBX310x\r\n\r\nOK\r\n']
+    expect_response = ['\r\nBX310x\r\nOK\r\n']
 
     print '\nStep 4: Send command without enable remote control on AUX1'
     SagSendRemoteAT(uart_com, 1, command, mtu)
@@ -139,7 +139,8 @@ try:
     if '+SRREMCMD:' in resp:
         print '-----> Problem: AUX1 still received remote command without enable remote control !!!'
         VarGlobal.statOfItem = "NOK"
-
+    else:
+        print '----> AUX1 module ignore remote command.'
     print '\nOn AUX1...'
     print 'Step 5: Enable remote control'
     SagSendAT(aux1_com, 'AT+SRREMCTRL=1\r')
@@ -148,7 +149,7 @@ try:
     print '\nOn DUT...'
     print 'Step 6: Execute AT command on remote BC Smart server'
     SagSendRemoteAT(uart_com, 1, command, mtu)
-    SagWaitnMatchResp(aux1_com, ['+SRREMCMD: "%s"\r' % command.replace('"', '\\22')], 2000)
+    SagWaitnMatchResp(aux1_com, ['+SRREMCMD: "%s"\r\n' % command.replace('"', '\\22')], 2000)
     SagWaitnMatchResp(aux1_com, expect_response, 2000)
     SagWaitnMatchRemoteResp(uart_com, 1, expect_response, 5000)
 
@@ -160,9 +161,9 @@ try:
     print '\nStep 8: Close BLE connection'
     print 'On DUT...'
     SagSendAT(uart_com, "AT+SRBLECLOSE=1\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
 
     print '\nStep 9: Delete BLE configuration'
     print 'On DUT...'

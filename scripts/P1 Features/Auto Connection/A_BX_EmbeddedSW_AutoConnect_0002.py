@@ -67,7 +67,8 @@ try:
 
     print "\nStep 1: Scan WI-FI Hotspot"
     SagSendAT(uart_com, "AT+SRWSTASCN\r")
-    SagWaitnMatchResp(uart_com, ['*+SRWSTASCN: *,*,*,"%s","%s"\r\n' % (wifi_ssid, wifi_mac_addr)], 10000)
+    if SagWaitnMatchResp(uart_com, ['*+SRWSTASCN: *,*,*,"%s","%s"\r\n' % (wifi_ssid, wifi_mac_addr)], 10000):
+        print '\nFound test AP: "%s"\n' % wifi_ssid
     SagWaitnMatchResp(uart_com, ['*\r\nOK\r\n'], 10000)
 
     print "\nStep 2: Configures module as Station mode"

@@ -131,13 +131,14 @@ try:
         if not SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: %s,1\r\nOK\r\n' % session], 5000):
             raise Exception("---->Problem: DUT cannot connect to AUX1 properly !!!")
         SagWaitnMatchResp(uart_com, ['+SRBLEMTU: %s,%s\r\n' % (session, mtu)], 2000)
-        SagWaitnMatchResp(uart_com, ['+SRBLEMTU: %s,%s\r\n\r\n+SRBCSMART: %s,1,1\r\n' % (session, mtu, session),'\r\n+SRBCSMART: %s,1,1\r\n+SRBLEMTU: %s,%s\r\n' % (session, session, mtu)], 2000)
-        SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, mtu)], 2000)
+        SagWaitnMatchResp(uart_com, ['+SRBLEMTU: %s,%s\r\n+SRBCSMART: %s,1,1\r\n' % (session, mtu, session),'+SRBCSMART: %s,1,1\r\n+SRBLEMTU: %s,%s\r\n' % (session, session, mtu)], 2000)
+        SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux1_max_mtu)], 2000)
         SagWaitnMatchResp(aux1_com, ['+SRBLE_IND: 1,1\r\n'], 2000)
         SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
-        SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu,'\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
+        SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
 
         data = 'Euler Testing'
+
         print '\nStep 5: Execute +SRBCSMARTSEND to send data to AUX with session id %s' % session
         SagSendAT(uart_com, 'AT+SRBCSMARTSEND=%s,0,"%s"\r' % (session, data))
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
@@ -145,9 +146,9 @@ try:
 
         print '\nStep 6: Close BLE connection'
         SagSendAT(uart_com, "AT+SRBLECLOSE=%s\r" % session)
-        SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: %s,0\r\n' % session], 2000)
+        SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: %s,0,*\r\n' % session], 2000)
         SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-        SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+        SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
 
         print '\nStep 7: Delete BLE configuration'
         print 'On DUT...'

@@ -117,12 +117,8 @@ print "\n----- Test Body End -----\n"
 
 print "-----------Restore Settings---------------"
 
-# Restore AP information to default
-SagSendAT(uart_com, 'AT+SRWAPCFG="BX31-200A6","eulerxyz",3,1,0,100\r')
-SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-
 # Restore Wi-Fi mode to default
-SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagSendAT(uart_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART

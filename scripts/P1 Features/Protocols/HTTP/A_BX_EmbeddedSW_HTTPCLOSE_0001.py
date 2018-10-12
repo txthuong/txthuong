@@ -89,7 +89,7 @@ try:
 
     print "\nStep 2: Query HTTP connection configuration"
     SagSendAT(uart_com, 'AT+KHTTPCFG?\r')
-    SagWaitnMatchResp(uart_com, ['\r\n+KHTTPCFG: 1,,"%s",80,0,,,0,0\r\n' % http_server], 2000)
+    SagWaitnMatchResp(uart_com, ['+KHTTPCFG: 1,,"%s",80,0,,,0,0\r\n' % http_server], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print "\nStep 3: Start HTTP connection"

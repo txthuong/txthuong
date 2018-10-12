@@ -19,7 +19,7 @@ try:
     print "\n------------Test Environment check: Begin------------"
     # UART Initialization
     print "\nOpen AT Command port"
-    uart_com = SagOpen(uart_com, 115200, 8, "N", 1, "None")
+    uart_com = SagOpen(aux1_com, 115200, 8, "N", 1, "None")
 
     # Display DUT information
     print "\nDisplay DUT information"
@@ -66,8 +66,8 @@ try:
 
     print "\nStep 1: Check +KGPIO test command"
     SagSendAT(uart_com, "AT+KGPIO=?\r")
-    SagWaitnMatchResp(uart_com, ['+KGPIO: (0-39),(0-2)\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+KGPIO: (0-39),(0-2)\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
 
     print "\nStep 2: Check +KGPIO execute command"
     SagSendAT(uart_com, "AT+KGPIO\r")
@@ -102,11 +102,11 @@ try:
     SagSendAT(uart_com, "AT+KGPIO=5\r")
     SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 917\r\n'], 2000)
     SagSendAT(uart_com, "AT+KGPIO=,0\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 917\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 916\r\n'], 2000)
     SagSendAT(uart_com, "AT+KGPIO=,1\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 917\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 916\r\n'], 2000)
     SagSendAT(uart_com, "AT+KGPIO=,2\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 917\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 916\r\n'], 2000)
 
     print "\nStep 7: Check +KGPIO write command with extra parameter"
     SagSendAT(uart_com, "AT+KGPIO=5,2,1\r")

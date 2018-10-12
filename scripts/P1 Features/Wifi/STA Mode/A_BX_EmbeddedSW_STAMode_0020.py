@@ -82,7 +82,7 @@ try:
     print "\nStep 4: Query +SRWSTANETCFG configuration\n"
     SagSendAT(uart_com, 'AT+SRWSTANETCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\n+SRWSTANETCFG: 0,"192.168.100.2","255.255.255.0","192.168.100.1"\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 5: Checking +SRWSTANETCFG write command with invalid value\n"
     SagSendAT(uart_com, 'AT+SRWSTANETCFG=0,"192.168.100.500","255.255.255.0","192.168.100.1"\r')
@@ -122,7 +122,7 @@ print "\n----- Test Body End -----\n"
 print "-----------Restore Settings---------------"
 
 # Restore DUT
-SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagSendAT(uart_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART, AUX1

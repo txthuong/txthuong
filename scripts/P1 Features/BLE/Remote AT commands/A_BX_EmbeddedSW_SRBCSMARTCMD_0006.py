@@ -124,11 +124,11 @@ try:
     if not SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,1\r\nOK\r\n'], 5000):
         raise Exception("---->Problem: DUT cannot connect to AUX1 properly !!!")
     SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu, '\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, mtu)], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n+SRBCSMART: 1,1,1\r\n' % mtu, '+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux1_max_mtu)], 2000)
     SagWaitnMatchResp(aux1_com, ['+SRBLE_IND: 1,1\r\n'], 2000)
     SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
-    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n\r\n+SRBCSMART: 1,1,1\r\n' % mtu, '\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
+    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu], 2000)
 
     print '\nStep 4: Check +SRBCSMARTCMD test command'
     SagSendAT(uart_com, 'AT+SRBCSMARTCMD=?\r')
@@ -142,14 +142,14 @@ try:
     SagSendAT(uart_com, 'AT+SRBCSMARTCMD?\r')
     SagWaitnMatchResp(uart_com, ['\r\nERROR\r\n'], 2000)
 
-    print '\nStep 7: Check +SRBCSMARTCMD write command with out-range and invalid parameter <session id>'
-    session_id = [-1, 0, 65, 'a', 'A', '*', '#']
+    print '\nStep 7: Check +SRBCSMARTCMD write command with invalid parameter <session id>'
+    session_id = ['a', 'A', '*', '#']
     for session in session_id:
         SagSendAT(uart_com, 'AT+SRBCSMARTCMD=%s,"AT\\0d"\r' % session)
         SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 916\r\n'], 2000)
 
-    print '\nStep 8: Check +SRBCSMARTCMD write command with not configured <session id>'
-    session_id = [2, 3, 10, 20, 64]
+    print '\nStep 8: Check +SRBCSMARTCMD write command with not configured and out-range <session id>'
+    session_id = [-1, 0, 65, 2, 3, 10, 20, 64]
     for session in session_id:
         SagSendAT(uart_com, 'AT+SRBCSMARTCMD=%s,"AT\\0d"\r' % session)
         SagWaitnMatchResp(uart_com, ['\r\n+CME ERROR: 910\r\n'], 2000)
@@ -174,14 +174,14 @@ try:
 
     print '\nStep 13: Check +SRBCSMARTCMD write command with valid parameters'
     SagSendAT(uart_com, 'AT+SRBCSMARTCMD=1,"AT\\0d"\r')
-    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print '\nStep 14: Close BLE connection'
     print 'On DUT...'
     SagSendAT(uart_com, "AT+SRBLECLOSE=1\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
     SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
 
     print '\nStep 15: Delete BLE configuration'
     print 'On DUT...'

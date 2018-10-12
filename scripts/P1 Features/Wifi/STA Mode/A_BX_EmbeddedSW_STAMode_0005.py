@@ -130,7 +130,7 @@ try:
     print "\nStep 8: Query current station configuration\n"
     SagSendAT(aux1_com, 'AT+SRWSTACFG?\r')
     SagWaitnMatchResp(aux1_com, ['\r\n+SRWSTACFG: "%s","%s",1\r\n' %(wifi_ssid, wifi_password)], 2000)
-    SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(aux1_com, ['OK\r\n'], 2000)
     
     print "\nStep 9: Connect to the access point from module B\n"
     SagSendAT(aux1_com, 'AT+SRWSTACON=1\r')
@@ -182,10 +182,10 @@ SagWaitnMatchResp(aux1_com, ['\r\n+SRWSTASTATUS: 0,8\r\n'], 2000)
 SagWaitnMatchResp(uart_com, ['\r\n+SRWAPSTA: 0,"%s"\r\n' % aux1_mac_address_sta], 2000 )
 
 # Restore DUT
-SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagSendAT(uart_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
-SagSendAT(aux1_com, 'AT+SRWCFG=3\r')
+SagSendAT(aux1_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(aux1_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART

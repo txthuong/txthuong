@@ -104,6 +104,8 @@ try:
 
     if '"%s"' % wifi_ssid not in response:
         raise Exception("----> Problem: Cannot find AUX Access Point !!!")
+    else:
+        print '\nFound Euler AP: "%s"' % wifi_ssid
 
     print "\nStep 5: Configures module as Station mode"
     SagSendAT(uart_com, "AT+SRWCFG=1\r")

@@ -42,6 +42,12 @@ try:
     SagMatchResp(resp, ['*\r\nOK\r\n'])
     dut_bluetooth_address = resp.split('"')[1]
 
+    print "\nGet BLE configure"
+    SagSendAT(uart_com, "AT+SRBLE?\r")
+    resp = SagWaitResp(uart_com, ['*\r\nOK\r\n'], 2000)
+    dut_bt_name = resp.split('"')[1]
+    dut_max_mtu = int(resp.split(',')[1])
+
     # AUX1 Initialization
     print "\nOpen AT Command port"
     aux1_com = SagOpen(aux1_com, 115200, 8, "N", 1, "None")
@@ -65,6 +71,12 @@ try:
     resp = SagWaitResp(aux1_com, ['*\r\nOK\r\n'], 2000)
     SagMatchResp(resp, ['*\r\nOK\r\n'])
     aux1_bluetooth_address = resp.split('"')[1]
+
+    print "\nGet BLE configure"
+    SagSendAT(aux1_com, "AT+SRBLE?\r")
+    resp = SagWaitResp(aux1_com, ['*\r\nOK\r\n'], 2000)
+    aux1_bt_name = resp.split('"')[1]
+    aux1_max_mtu = int(resp.split(',')[1])
 
     # AUX2 Initialization
     print "\nOpen AT Command port"
@@ -90,12 +102,18 @@ try:
     SagMatchResp(resp, ['*\r\nOK\r\n'])
     aux2_bluetooth_address = resp.split('"')[1]
 
-    # AUX3 Initialization
+    print "\nGet BLE configure"
+    SagSendAT(aux2_com, "AT+SRBLE?\r")
+    resp = SagWaitResp(aux2_com, ['*\r\nOK\r\n'], 2000)
+    aux2_bt_name = resp.split('"')[1]
+    aux2_max_mtu = int(resp.split(',')[1])
+
+    # AUX2 Initialization
     print "\nOpen AT Command port"
     aux3_com = SagOpen(aux3_com, 115200, 8, "N", 1, "None")
 
-    # Display AUX3 information
-    print "\nDisplay AUX3 information"
+    # Display AUX2 information
+    print "\nDisplay AUX2 information"
     print "\nGet model information"
     SagSendAT(aux3_com, "AT+FMM\r")
     SagWaitnMatchResp(aux3_com, ['*\r\nOK\r\n'], 2000)
@@ -113,6 +131,12 @@ try:
     resp = SagWaitResp(aux3_com, ['*\r\nOK\r\n'], 2000)
     SagMatchResp(resp, ['*\r\nOK\r\n'])
     aux3_bluetooth_address = resp.split('"')[1]
+
+    print "\nGet BLE configure"
+    SagSendAT(aux3_com, "AT+SRBLE?\r")
+    resp = SagWaitResp(aux3_com, ['*\r\nOK\r\n'], 2000)
+    aux3_bt_name = resp.split('"')[1]
+    aux3_max_mtu = int(resp.split(',')[1])
 
 except Exception, e:
     print "***** Test environment check fails !!!*****"
@@ -148,19 +172,19 @@ try:
     print '\nOn AUX1...'
     print 'Step 1: Configure a BLE connection to DUT'
     SagSendAT(aux1_com, 'AT+SRBLECFG=%s\r' % dut_bluetooth_address)
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",23\r\n' % dut_bluetooth_address], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux1_max_mtu)], 2000)
     SagWaitnMatchResp(aux1_com, ['OK\r\n'], 2000)
 
     print '\nOn AUX2...'
     print 'Step 2: Configure a BLE connection to DUT'
     SagSendAT(aux2_com, 'AT+SRBLECFG=%s\r' % dut_bluetooth_address)
-    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLECFG: 1,0,"%s",23\r\n' % dut_bluetooth_address], 2000)
+    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux2_max_mtu)], 2000)
     SagWaitnMatchResp(aux2_com, ['OK\r\n'], 2000)
 
     print '\nOn AUX3...'
     print 'Step 3: Configure a BLE connection to DUT'
     SagSendAT(aux3_com, 'AT+SRBLECFG=%s\r' % dut_bluetooth_address)
-    SagWaitnMatchResp(aux3_com, ['\r\n+SRBLECFG: 1,0,"%s",23\r\n' % dut_bluetooth_address], 2000)
+    SagWaitnMatchResp(aux3_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (dut_bluetooth_address, aux3_max_mtu)], 2000)
     SagWaitnMatchResp(aux3_com, ['OK\r\n'], 2000)
 
     print '\nOn DUT...'
@@ -168,76 +192,79 @@ try:
     SagSendAT(uart_com, "AT+SRBLEADV=1\r")
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 3000)
 
+    mtu1 = min(aux1_max_mtu, dut_max_mtu)
+
     print '\nOn AUX1...'
     print 'Step 5: Active BLE connection to DUT'
     SagSendAT(aux1_com, 'AT+SRBLECNX=1\r')
     if not SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,1\r\nOK\r\n'], 5000):
-        raise Exception("---->Problem: AUX1 cannot connect to DUT properly !!!")
-    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,23\r\n'], 2000)
-    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,23\r\n\r\n+SRBCSMART: 1,1,1\r\n','\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,23\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 1,0,"%s",23\r\n' % aux1_bluetooth_address], 2000)
+        raise Exception("---->Problem: DUT cannot connect to AUX1 properly !!!")
+    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
+    SagWaitnMatchResp(aux1_com, ['+SRBLEMTU: 1,%s\r\n+SRBCSMART: 1,1,1\r\n' % mtu1, '+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 1,0,"%s",%s\r\n' % (aux1_bluetooth_address, dut_max_mtu)], 2000)
     SagWaitnMatchResp(uart_com, ['+SRBLE_IND: 1,1\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,23\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,23\r\n\r\n+SRBCSMART: 1,1,1\r\n','\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,23\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 1,%s\r\n' % mtu1], 2000)
 
     print '\nOn DUT...'
     print 'Step 6: Start BLE advertising'
     SagSendAT(uart_com, "AT+SRBLEADV=1\r")
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 3000)
 
+    mtu2 = min(aux2_max_mtu, dut_max_mtu)
+
     print '\nOn AUX2...'
     print 'Step 7: Active BLE connection to DUT'
     SagSendAT(aux2_com, 'AT+SRBLECNX=1\r')
     if not SagWaitnMatchResp(aux2_com, ['\r\n+SRBLE_IND: 1,1\r\nOK\r\n'], 5000):
-        raise Exception("---->Problem: AUX2 cannot connect to DUT properly !!!")
-    SagWaitnMatchResp(aux2_com, ['+SRBLEMTU: 1,23\r\n'], 2000)
-    SagWaitnMatchResp(aux2_com, ['+SRBLEMTU: 1,23\r\n\r\n+SRBCSMART: 1,1,1\r\n','\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,23\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 2,0,"%s",23\r\n' % aux2_bluetooth_address], 2000)
+        raise Exception("---->Problem: DUT cannot connect to AUX1 properly !!!")
+    SagWaitnMatchResp(aux2_com, ['+SRBLEMTU: 1,%s\r\n' % mtu2], 2000)
+    SagWaitnMatchResp(aux2_com, ['+SRBLEMTU: 1,%s\r\n+SRBCSMART: 1,1,1\r\n' % mtu2, '+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu2], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 2,0,"%s",%s\r\n' % (aux2_bluetooth_address, dut_max_mtu)], 2000)
     SagWaitnMatchResp(uart_com, ['+SRBLE_IND: 2,1\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 2,23\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 2,23\r\n\r\n+SRBCSMART: 2,1,1\r\n','\r\n+SRBCSMART: 2,1,1\r\n+SRBLEMTU: 2,23\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 2,%s\r\n' % mtu2], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 2,%s\r\n' % mtu2], 2000)
 
     print '\nOn DUT...'
     print 'Step 8: Start BLE advertising'
     SagSendAT(uart_com, "AT+SRBLEADV=1\r")
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 3000)
 
+    mtu3 = min(aux3_max_mtu, dut_max_mtu)
+
     print '\nOn AUX3...'
     print 'Step 9: Active BLE connection to DUT'
     SagSendAT(aux3_com, 'AT+SRBLECNX=1\r')
     if not SagWaitnMatchResp(aux3_com, ['\r\n+SRBLE_IND: 1,1\r\nOK\r\n'], 5000):
-        raise Exception("---->Problem: AUX2 cannot connect to DUT properly !!!")
-    SagWaitnMatchResp(aux3_com, ['+SRBLEMTU: 1,23\r\n'], 2000)
-    SagWaitnMatchResp(aux3_com, ['+SRBLEMTU: 1,23\r\n\r\n+SRBCSMART: 1,1,1\r\n','\r\n+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,23\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 3,0,"%s",23\r\n' % aux3_bluetooth_address], 2000)
+        raise Exception("---->Problem: DUT cannot connect to AUX1 properly !!!")
+    SagWaitnMatchResp(aux3_com, ['+SRBLEMTU: 1,%s\r\n' % mtu3], 2000)
+    SagWaitnMatchResp(aux3_com, ['+SRBLEMTU: 1,%s\r\n+SRBCSMART: 1,1,1\r\n' % mtu3, '+SRBCSMART: 1,1,1\r\n+SRBLEMTU: 1,%s\r\n' % mtu3], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 3,0,"%s",%s\r\n' % (aux3_bluetooth_address, dut_max_mtu)], 2000)
     SagWaitnMatchResp(uart_com, ['+SRBLE_IND: 3,1\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 3,23\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 3,23\r\n\r\n+SRBCSMART: 3,1,1\r\n','\r\n+SRBCSMART: 3,1,1\r\n+SRBLEMTU: 3,23\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 3,%s\r\n' % mtu3], 2000)
+    SagWaitnMatchResp(uart_com, ['+SRBLEMTU: 3,%s\r\n' % mtu3], 2000)
 
     print '\nOn DUT...'
     print 'Step 10: Query BLE current connection'
     SagSendAT(uart_com, "AT+SRBLECFG?\r")
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 1,1,"%s",23' % aux1_bluetooth_address], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 2,1,"%s",23' % aux2_bluetooth_address], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 3,1,"%s",23' % aux3_bluetooth_address], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 1,1,"%s",%s' % (aux1_bluetooth_address, dut_max_mtu)], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 2,1,"%s",%s' % (aux2_bluetooth_address, dut_max_mtu)], 2000)
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLECFG: 3,1,"%s",%s' % (aux3_bluetooth_address, dut_max_mtu)], 2000)
     SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print '\nStep 11: Close all BLE connection'
-    print 'On AUX1...'
-    SagSendAT(aux1_com, "AT+SRBLECLOSE=1\r")
-    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
-    SagWaitnMatchResp(aux1_com, ['OK\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
-    print 'On AUX2...'
-    SagSendAT(aux2_com, "AT+SRBLECLOSE=1\r")
-    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
-    SagWaitnMatchResp(aux2_com, ['OK\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 2,0\r\n'], 2000)
-    print 'On AUX3...'
-    SagSendAT(aux3_com, "AT+SRBLECLOSE=1\r")
-    SagWaitnMatchResp(aux3_com, ['\r\n+SRBLE_IND: 1,0\r\n'], 2000)
-    SagWaitnMatchResp(aux3_com, ['OK\r\n'], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 3,0\r\n'], 2000)
+    SagSendAT(uart_com, "AT+SRBLECLOSE=1\r")
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
+    SagWaitnMatchResp(aux1_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
+    SagSendAT(uart_com, "AT+SRBLECLOSE=2\r")
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 2,0,*\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
+    SagWaitnMatchResp(aux2_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
+    SagSendAT(uart_com, "AT+SRBLECLOSE=3\r")
+    SagWaitnMatchResp(uart_com, ['\r\n+SRBLE_IND: 3,0,*\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
+    SagWaitnMatchResp(aux3_com, ['\r\n+SRBLE_IND: 1,0,*\r\n'], 2000)
 
     print '\nStep 12: Delete all BLE configuration'
     print 'On DUT...'

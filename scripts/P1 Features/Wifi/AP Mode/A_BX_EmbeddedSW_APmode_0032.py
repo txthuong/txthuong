@@ -81,7 +81,7 @@ try:
     print "\nStep 4: Query network configuration\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.102",720\r\n' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nStep 5: Re-configure DHCP with invalid values  (more than 101 IP address in DHCP IP pool)\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG=1,"%s","%s.2","%s.103",720\r' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway)))
@@ -90,7 +90,7 @@ try:
     print "\nStep 6: Query network configuration\n"
     SagSendAT(uart_com, 'AT+SRWAPNETCFG?\r')
     SagWaitnMatchResp(uart_com, ['\r\n+SRWAPNETCFG: 1,"%s","%s.2","%s.102",720\r\n' %(wifi_dhcp_gateway, return_subnet(wifi_dhcp_gateway), return_subnet(wifi_dhcp_gateway))], 2000)
-    SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+    SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
     
     print "\nTest Steps completed\n"
 except Exception, err_msg :
@@ -109,7 +109,7 @@ print "\n----- Test Body End -----\n"
 print "-----------Restore Settings---------------"
 
 # Restore DUT
-SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagSendAT(uart_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 #Disable DHCP server

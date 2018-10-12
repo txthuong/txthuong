@@ -102,8 +102,8 @@ try:
         SagWaitnMatchResp(uart_com, ['\r\n+KHTTPCFG: %s\r\n' % session_id], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
         SagSendAT(uart_com, "AT+KHTTPCFG?\r")
-        SagWaitnMatchResp(uart_com, ['*\r\n+KHTTPCFG: %d,,"%s",80,0,,,0,0\r\n' % (session_id, server)], 2000)
-        SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+        SagWaitnMatchResp(uart_com, ['*+KHTTPCFG: %d,,"%s",80,0,,,0,0\r\n' % (session_id, server)], 2000)
+        SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
         session_id = session_id + 1
 
     print "\nStep 5: Check +KHTTPCFG write command with parameter <http_port>\n"
@@ -113,8 +113,8 @@ try:
         SagWaitnMatchResp(uart_com, ['\r\n+KHTTPCFG: %s\r\n' % session_id], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
         SagSendAT(uart_com, "AT+KHTTPCFG?\r")
-        SagWaitnMatchResp(uart_com, ['*\r\n+KHTTPCFG: %d,,"httpbin.org",%d,0,,,0,0\r\n' % (session_id, port)], 2000)
-        SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+        SagWaitnMatchResp(uart_com, ['*+KHTTPCFG: %d,,"httpbin.org",%d,0,,,0,0\r\n' % (session_id, port)], 2000)
+        SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
         session_id = session_id + 1
 
     print "\nStep 6: Check +KHTTPCFG write command with parameter <http_version>\n"
@@ -124,7 +124,7 @@ try:
         SagWaitnMatchResp(uart_com, ['\r\n+KHTTPCFG: %s\r\n' % session_id], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
         SagSendAT(uart_com, "AT+KHTTPCFG?\r")
-        SagWaitnMatchResp(uart_com, ['*\r\n+KHTTPCFG: %d,,"httpbin.org",80,%d,,,0,0\r\n' % (session_id, ver)], 2000)
+        SagWaitnMatchResp(uart_com, ['*+KHTTPCFG: %d,,"httpbin.org",80,%d,,,0,0\r\n' % (session_id, ver)], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
         session_id = session_id + 1
 
@@ -135,8 +135,8 @@ try:
         SagWaitnMatchResp(uart_com, ['\r\n+KHTTPCFG: %s\r\n' % session_id], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
         SagSendAT(uart_com, "AT+KHTTPCFG?\r")
-        SagWaitnMatchResp(uart_com, ['*\r\n+KHTTPCFG: %d,,"httpbin.org",80,0,"%s",,0,0\r\n' % (session_id, user)], 2000)
-        SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+        SagWaitnMatchResp(uart_com, ['*+KHTTPCFG: %d,,"httpbin.org",80,0,"%s",,0,0\r\n' % (session_id, user)], 2000)
+        SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
         session_id = session_id + 1
 
     print "\nStep 8: Check +KHTTPCFG write command with parameter <password>\n"
@@ -146,8 +146,8 @@ try:
         SagWaitnMatchResp(uart_com, ['\r\n+KHTTPCFG: %s\r\n' % session_id], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
         SagSendAT(uart_com, "AT+KHTTPCFG?\r")
-        SagWaitnMatchResp(uart_com, ['*\r\n+KHTTPCFG: %d,,"httpbin.org",80,0,"euler","%s",0,0\r\n' % (session_id, pw)], 2000)
-        SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+        SagWaitnMatchResp(uart_com, ['*+KHTTPCFG: %d,,"httpbin.org",80,0,"euler","%s",0,0\r\n' % (session_id, pw)], 2000)
+        SagWaitnMatchResp(uart_com, ['OK\r\n'], 2000)
         session_id = session_id + 1
 
     print "\nDelete all HTTP configurations\n"
@@ -215,7 +215,7 @@ SagSendAT(uart_com, 'AT+SRWSTACFG="","",1\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Restore Wi-Fi mode to default
-SagSendAT(uart_com, 'AT+SRWCFG=3\r')
+SagSendAT(uart_com, 'AT+SRWCFG=0\r')
 SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
 # Close UART

@@ -16,7 +16,7 @@ def myLog2Html(dest,d):
     fp.write('\n')
     fp.write(r'<H2>One Click Test Result Summary<br>---------------------------------------------------------------------<br>Note: Test: 1-Click, Owner and Test: Estimated Duration are not used yet<br>Note: Elapsed time are total all loops<br></H2>')
     fp.write('\n')
-    fp.write(r'<table>')
+    fp.write(r'<table border="1">')
     fp.write('\n')
     fp.write(r'<colgroup>')
     fp.write('\n')

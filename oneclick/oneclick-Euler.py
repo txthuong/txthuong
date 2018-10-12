@@ -218,7 +218,7 @@ def check_enviroment():
 
 
 def update_cfg():
-    for field in ["UART_COM", "AUX1_COM", "AUX2_COM", "WIFI_SSID", "WIFI_MAC_ADDR", "WIFI_PASSWORD", "HTTP_SERVER", "HTTP_SERVER_IP_ADDRESS", "HTTPS_SERVER", "HTTPS_SERVER_IP_ADDRESS", "MQTT_SERVER", "TCP_SERVER","TCP_PORT", "UDP_SERVER","UDP_PORT", "DUT_MAC_ADDRESS", "AUX1_MAC_ADDRESS", "AUX2_MAC_ADDRESS", "DUT_BLUETOOTH_ADDRESS", "AUX1_BLUETOOTH_ADDRESS", "AUX2_BLUETOOTH_ADDRESS", "DUT_MAC_ADDRESS_STA", "AUX1_MAC_ADDRESS_STA", "HTTP_USER", "HTTP_PASSWORD", "HTTP_SERVER2", "HTTPS_SERVER2", "AVMS", "HTTPS_PORT", "WIFI_DHCP_GATEWAY", "WIFI_DHCP_SUBNET_MASK"]:
+    for field in ["UART_COM", "AUX1_COM", "AUX2_COM", "WIFI_SSID", "WIFI_MAC_ADDR", "WIFI_PASSWORD", "HTTP_SERVER", "HTTP_SERVER_IP_ADDRESS", "HTTPS_SERVER", "HTTPS_SERVER_IP_ADDRESS", "MQTT_SERVER", "TCP_SERVER","TCP_PORT", "UDP_SERVER","UDP_PORT", "DUT_MAC_ADDRESS", "AUX1_MAC_ADDRESS", "AUX2_MAC_ADDRESS", "DUT_BLUETOOTH_ADDRESS", "AUX1_BLUETOOTH_ADDRESS", "AUX2_BLUETOOTH_ADDRESS", "DUT_MAC_ADDRESS_STA", "AUX1_MAC_ADDRESS_STA", "HTTP_USER", "HTTP_PASSWORD", "HTTP_SERVER2", "HTTPS_SERVER2", "AVMS", "HTTPS_PORT", "WIFI_DHCP_GATEWAY", "WIFI_DHCP_SUBNET_MASK", "CONTROL_COM", "CONTROL_PIN"]:
         try:
             if (field in os.environ) and ('AVMS' in field):
                 update_file(cfg_file_with_path, "^%s\s*=\s*\d*" %
@@ -944,6 +944,7 @@ def run(test_case_pool_dict):
 
         # NOTE llaw: tc means testcase name here.
         # for tc in test_case_pool_dict.keys():
+        tc_already_run = {}
         for tc in lsSortedTCName:
             start_time = time()
             memo_number_tc = memo_number_tc + 1
@@ -1300,6 +1301,127 @@ def run(test_case_pool_dict):
 
             total_test_number = total_test_number - 1
 
+            
+            tc_already_run.update({tc:test_case_pool_dict[tc]})
+            try:
+                
+                # NOTE llaw: function this please ---
+                lsSortedTCName = []
+                lsExpandedByLastNum = []
+                lsSortTCName = tc_already_run.keys()
+                for sSortTCName in lsSortTCName:
+                    sExpandedByLastNum = sSortTCName[-4::] + '@@' + sSortTCName
+                    lsExpandedByLastNum.append(sExpandedByLastNum)
+
+                for sExpandedByLastNum in sorted(lsExpandedByLastNum):
+                    lsSortedTCName.append(sExpandedByLastNum.split('@@')[1])
+
+                pprint.pprint(lsSortedTCName)
+                # NOTE llaw: function this please ---
+
+                d = {}
+                # for tc in test_case_pool_dict.keys():
+                for tc in lsSortedTCName:
+                    d[tc] = {'script': tc_already_run[tc]['Script'].split('/')[-1],
+                             'ref_result': 'Not Use',
+                             'job_name': os.environ['JOB_NAME'],
+                             'build_number': os.environ['BUILD_NUMBER'],
+                             'result': {'loop1': {'status': '', 'link': ''},
+                                        'loop2': {'status': '', 'link': ''},
+                                        'loop3': {'status': '', 'link': ''},
+                                        'loop4': {'status': '', 'link': ''},
+                                        'loop5': {'status': '', 'link': ''}
+                                        },
+                             'elapse_time': timer[tc],
+                             # 'IssueID': test_case_pool_dict[tc]['IssueID'],
+                             'IssueID': 'Not Use',
+                             'FW version': versions[tc],
+                             # 'Instance': test_case_pool_dict[tc]['Instance'],
+                             'Instance': 'Not Use',
+                             # 'ResponsibleTester': test_case_pool_dict[tc]['ResponsibleTester'],
+                             'ResponsibleTester': 'vhoang',
+                             # 'Feature_Owner': test_case_pool_dict[tc]['Feature_Owner']
+                             'Feature_Owner': 'vhoang'
+                             }
+                # for tc in test_case_pool_dict.keys():
+                for loop in range(1, int(os.environ['Loop'])+1):
+                    log_file_list = []
+                    # print loop
+                    print log_file_list
+
+                    for root, dirs, files in os.walk(r"%s\loop%s" % (log_path, str(loop))):
+                        for each_log in files:
+                            log_file_list.append(os.path.join(root, each_log))
+
+                    p = re.compile("A_\S*_\w{4}.log")
+                    # print len(log_file_list)
+                    xx = 1
+                    for each_log in log_file_list:
+                        print
+                        # print xx
+                        print "\nchecking for %s" % each_log
+                        xx = xx + 1
+                        if not (p.search(each_log) is not None):
+                            os.remove(each_log)
+                            sleep(1)
+                            if os.path.isfile(each_log):
+                                print "---->Warn: Fail to delete %s" % each_log
+                            log_file_list.remove(each_log)
+                            print "%s is deleted" % each_log
+
+                    #    NOTE ??
+                    sleep(3)
+
+                    for each_log in log_file_list:
+                        log2html_converter(each_log, r"%s\loop%s" %
+                                           (log_path_html, str(loop)))
+
+                print "\nHTML format log generation done\n"
+
+                print "\n***Search Result for each Test Case***\n"
+
+                for tc in tc_already_run.keys():
+                    for loop in range(1, int(os.environ['Loop'])+1):
+                        log_file_list = []
+
+                        for root, dirs, files in os.walk(r"%s\loop%s" % (log_path, str(loop))):
+                            for each_log in files:
+                                log_file_list.append(os.path.join(root, each_log))
+                        # p = re.compile("Status\s*%s\s*:\s*(\S+)" % tc)
+                        p = re.compile("Status\s%s:\s(\S+)" %tc)
+                        print "\nSearch result for %s in loop %s" % (tc, str(loop))
+
+                        tc_not_found = True
+                        tc_log_not_found = True
+                        masterUrl = os.environ['BUILD_URL'].replace(os.environ['BUILD_NUMBER'] + '/','') + \
+                            'ws/html/%s/loop%s/%s.html'
+                        for each_log in log_file_list:
+                            if tc_already_run[tc]['Script'].split('\\')[-1].replace('.py', '.log').replace(".PY", ".log").strip('"') in each_log:
+                                tc_log_not_found = False
+                                print "\n%s is being scanned..." % each_log
+                                print "%s is opened\n" % each_log
+                                with open(each_log) as f:
+                                    for line in f.readlines():
+                                        k = p.search(line)
+                                        if k is not None:
+                                            tc_not_found = False
+                                            tc_already_run[tc]['result']['loop%s' % str(loop)][
+                                                'status'] = k.group(1).capitalize()
+                                            print "\n%s : %s\n" % (tc, k.group(1).capitalize())
+                                            tc_already_run[tc]['result']['loop%s' % str(loop)]['link'] = masterUrl % (
+                                                os.environ['BUILD_NUMBER'], str(loop), tc_already_run[tc]['Script'].split(".")[0].split('\\')[-1].strip('"'))
+                                        else:
+                                            pass
+                                if tc_not_found:
+                                    tc_already_run[tc]['result']['loop%s' %
+                                                    str(loop)]['status'] = "NoTC"
+                                    tc_already_run[tc]['result']['loop%s' % str(loop)]['link'] = masterUrl % (
+                                        os.environ['BUILD_NUMBER'], str(loop), tc_already_run[tc]['Script'].split(".")[0])
+                myLog2Html(report_path, tc_already_run)
+            except Exception, e:
+                traceback.print_exc()
+                print "\n---->Problem : Fail to generate HTML report !!!\n"
+
             # if os.environ['QC_1_Click_TestLab_Filter'] == "Run me":
                 # update_TestLab_OneClick(os.environ['QC_Path_Test_Campaign'].split(
                     # ":")[0], os.environ['QC_Path_Test_Campaign'].split(":")[1], '"Run me"', tc)
@@ -1511,51 +1633,54 @@ def run(test_case_pool_dict):
         # traceback.print_exc()
         # print "\n---->Proble: exception comes up when update Expected Duration field in Test Plan !!!\n"
 
-    # #    NOTE excel generate report start
-    # print "\n\n----------------------------------------------------------------"
-    # print "    Generate Excel report"
-    # print "----------------------------------------------------------------\n\n"
-    # try:
-        # xlApp = Dispatch("Excel.Application")
-        # xlApp.Visible = True
-        # wb = xlApp.Workbooks.Add()
-        # sh = wb.sheets["Sheet1"]
+    #    NOTE excel generate report start
+    print "\n\n----------------------------------------------------------------"
+    print "    Generate Excel report"
+    print "----------------------------------------------------------------\n\n"
+    try:
+        xlApp = Dispatch("Excel.Application")
+        xlApp.Visible = True
+        wb = xlApp.Workbooks.Add()
+        sh = wb.sheets["Sheet1"]
 
-        # col_testName = 1
-        # col_scriptName = 2
-        # col_owner = 3
-        # col_thisRun_1 = 4
-        # col_thisRun_2 = 5
-        # col_thisRun_3 = 6
-        # col_thisRun_4 = 7
-        # col_thisRun_5 = 8
+        col_testName = 1
+        #col_scriptName = 2
+        #col_owner = 4
+        col_ModuleType = 2
+        col_FwVersion = 3
+        col_thisRun_1 = 4
+        col_thisRun_2 = 5
+        col_thisRun_3 = 6
+        col_thisRun_4 = 7
+        col_thisRun_5 = 8
 
-        # sh.Cells(1, col_testName).Value = "Test Name"
-        # sh.Cells(1, col_instance).Value = "Name"
-        # sh.Cells(1, col_scriptName).Value = "Script Name"
-        # sh.Cells(1, col_owner).Value = "Feature Owner"
-        # sh.Cells(1, col_QcLastRun).Value = "Last Run"
-        # sh.Cells(1, col_QcIssueId).Value = "Issue ID"
-        # sh.Cells(1, col_Platform).Value = "PlatForm"
-        # sh.Cells(1, col_FwVersion).Value = "FW version"
-        # sh.Cells(1, col_ModuleType).Value = "ModuleType"
-        # sh.Cells(1, col_ModulRef).Value = "ModuleRef"
-        # sh.Cells(1, col_thisRun_1).Value = "Loop 1"
-        # sh.Cells(1, col_thisRun_2).Value = "Loop 2"
-        # sh.Cells(1, col_thisRun_3).Value = "Loop 3"
-        # sh.Cells(1, col_thisRun_4).Value = "Loop 4"
-        # sh.Cells(1, col_thisRun_5).Value = "Loop 5"
-        # sh.Cells(1, col_build).Value = "Build Number"
-        # sh.Cells(1, col_ResponsbileTester).Value = "Responsible Tester"
-        # sh.Cells(1, col_ScriptRev).Value = "Script Revision"
+        #sh.Cells(1, col_stt).Value = "No"
+        sh.Cells(1, col_testName).Value = "Test Name"
+        #sh.Cells(1, col_instance).Value = "Name"
+        #sh.Cells(1, col_scriptName).Value = "Script Name"
+        #sh.Cells(1, col_owner).Value = "Feature Owner"
+        #sh.Cells(1, col_QcLastRun).Value = "Last Run"
+        #sh.Cells(1, col_QcIssueId).Value = "Issue ID"
+        #sh.Cells(1, col_Platform).Value = "PlatForm"
+        sh.Cells(1, col_ModuleType).Value = "ModuleType"
+        sh.Cells(1, col_FwVersion).Value = "FW version"
+        #sh.Cells(1, col_ModulRef).Value = "ModuleRef"
+        sh.Cells(1, col_thisRun_1).Value = "Loop 1"
+        sh.Cells(1, col_thisRun_2).Value = "Loop 2"
+        sh.Cells(1, col_thisRun_3).Value = "Loop 3"
+        sh.Cells(1, col_thisRun_4).Value = "Loop 4"
+        sh.Cells(1, col_thisRun_5).Value = "Loop 5"
+        #sh.Cells(1, col_build).Value = "Build Number"
+        #sh.Cells(1, col_ResponsbileTester).Value = "Responsible Tester"
+        #sh.Cells(1, col_ScriptRev).Value = "Script Revision"
 
-        # row = 2
+        row = 2
 
-        # link = r"%s/ws/html/%s/%s.html"
+        link = r"%s/ws/html/%s/%s.html"
 
-        # module_type = os.environ['Module_Type']
-        # module_ref = os.environ['Module_Ref']
-        # sim = os.environ['SIM_INI'].split('\\')[-1].split('.')[0]
+        module_type = 'BX310x'
+        #module_ref = os.environ['Module_Ref']
+        #sim = os.environ['SIM_INI'].split('\\')[-1].split('.')[0]
         # if 'AUX_SIM_INI' in os.environ:
             # sim += ', '
             # sim += os.environ['AUX_SIM_INI'].split('\\')[-1].split('.')[0]
@@ -1563,10 +1688,10 @@ def run(test_case_pool_dict):
             # sim += ', '
             # sim += os.environ['AUX2_SIM_INI'].split('\\')[-1].split('.')[0]
 
-        # for tc in d.keys():
-            # sh.Cells(row, col_testName).Value = tc
-            # sh.Cells(row, col_instance).Value = d[tc]['Instance']
-            # sh.Cells(row, col_scriptName).Value = d[tc]['script']
+        for tc in d.keys():
+            sh.Cells(row, col_testName).Value = tc
+            #sh.Cells(row, col_instance).Value = d[tc]['Instance']
+            #sh.Cells(row, col_scriptName).Value = d[tc]['script']
             # if "hecking" in os.environ['QC_Filter']:
                 # sh.Cells(row, col_owner).Value = d[tc]['Feature_Owner']
             # else:
@@ -1575,70 +1700,70 @@ def run(test_case_pool_dict):
             # sh.Cells(row, col_QcIssueId).Value = d[tc]['IssueID']
             # sh.Cells(row, col_Platform).Value = os.environ['JOB_NAME']
             # sh.Cells(row, col_FwVersion).Value = d[tc]['FW version']
-            # sh.Cells(row, col_ModuleType).Value = module_type
-            # sh.Cells(row, col_ModulRef).Value = module_ref
-            # sh.Cells(row, col_SIM).Value = sim
+            sh.Cells(row, col_ModuleType).Value = module_type
+            #sh.Cells(row, col_ModulRef).Value = module_ref
+            #sh.Cells(row, col_SIM).Value = sim
 
-            # sh.Cells(row, col_thisRun_1).Value = d[
-                # tc]['result']['loop1']['status']
-            # if d[tc]['result']['loop1']['link'] != '':
-                # sh.Hyperlinks.Add(Anchor=sh.Range(sh.Cells(row, col_thisRun_1).Address),
-                                  # Address=d[tc]['result']['loop1']['link'])
+            sh.Cells(row, col_thisRun_1).Value = d[
+                tc]['result']['loop1']['status']
+            if d[tc]['result']['loop1']['link'] != '':
+                sh.Hyperlinks.Add(Anchor=sh.Range(sh.Cells(row, col_thisRun_1).Address),
+                                  Address=d[tc]['result']['loop1']['link'])
 
-            # sh.Cells(row, col_thisRun_2).Value = d[
-                # tc]['result']['loop2']['status']
-            # if d[tc]['result']['loop2']['link'] != '':
-                # sh.Hyperlinks.Add(Anchor=sh.Range(sh.Cells(row, col_thisRun_2).Address),
-                                  # Address=d[tc]['result']['loop2']['link'])
+            sh.Cells(row, col_thisRun_2).Value = d[
+                tc]['result']['loop2']['status']
+            if d[tc]['result']['loop2']['link'] != '':
+                sh.Hyperlinks.Add(Anchor=sh.Range(sh.Cells(row, col_thisRun_2).Address),
+                                  Address=d[tc]['result']['loop2']['link'])
 
-            # sh.Cells(row, col_thisRun_3).Value = d[
-                # tc]['result']['loop3']['status']
-            # if d[tc]['result']['loop3']['link'] != '':
-                # sh.Hyperlinks.Add(Anchor=sh.Range(sh.Cells(row, col_thisRun_3).Address),
-                                  # Address=d[tc]['result']['loop3']['link'])
+            sh.Cells(row, col_thisRun_3).Value = d[
+                tc]['result']['loop3']['status']
+            if d[tc]['result']['loop3']['link'] != '':
+                sh.Hyperlinks.Add(Anchor=sh.Range(sh.Cells(row, col_thisRun_3).Address),
+                                  Address=d[tc]['result']['loop3']['link'])
 
-            # sh.Cells(row, col_thisRun_4).Value = d[
-                # tc]['result']['loop4']['status']
-            # if d[tc]['result']['loop4']['link'] != '':
-                # sh.Hyperlinks.Add(Anchor=sh.Range(sh.Cells(row, col_thisRun_4).Address),
-                                  # Address=d[tc]['result']['loop4']['link'])
+            sh.Cells(row, col_thisRun_4).Value = d[
+                tc]['result']['loop4']['status']
+            if d[tc]['result']['loop4']['link'] != '':
+                sh.Hyperlinks.Add(Anchor=sh.Range(sh.Cells(row, col_thisRun_4).Address),
+                                  Address=d[tc]['result']['loop4']['link'])
 
-            # sh.Cells(row, col_thisRun_5).Value = d[
-                # tc]['result']['loop5']['status']
-            # if d[tc]['result']['loop5']['link'] != '':
-                # sh.Hyperlinks.Add(Anchor=sh.Range(sh.Cells(row, col_thisRun_5).Address),
-                                  # Address=d[tc]['result']['loop5']['link'])
+            sh.Cells(row, col_thisRun_5).Value = d[
+                tc]['result']['loop5']['status']
+            if d[tc]['result']['loop5']['link'] != '':
+                sh.Hyperlinks.Add(Anchor=sh.Range(sh.Cells(row, col_thisRun_5).Address),
+                                  Address=d[tc]['result']['loop5']['link'])
 
-            # sh.Cells(row, col_build).Value = os.environ['BUILD_NUMBER']
-            # sh.Cells(row, col_ResponsbileTester).Value = d[
-                # tc]['ResponsibleTester']
-            # #sh.Cells(row, col_ScriptRev).Value = getScriptRev(d[tc]['script'])
-            # sh.Cells(row, col_ScriptRev).Value = "1111"
+            #sh.Cells(row, col_build).Value = os.environ['BUILD_NUMBER']
+            #sh.Cells(row, col_ResponsbileTester).Value = d[
+            #    tc]['ResponsibleTester']
+            #sh.Cells(row, col_ScriptRev).Value = getScriptRev(d[tc]['script'])
+            #sh.Cells(row, col_ScriptRev).Value = "1111"
 
-            # row += 1
-        # print 'Report file'+report_path
-        # #wb.SaveAs(r"%s\Report_%s_Build_%s.xlsx" % (
-            # #report_path, os.environ['JOB_NAME'], os.environ['BUILD_NUMBER']))
-        # print debug_environ['JOB_NAME']
-        # print debug_environ['BUILD_NUMBER']
+            row += 1
+        print 'Report file'+report_path
+        #wb.SaveAs(r"%s\Report_%s_Build_%s.xlsx" % (
+            #report_path, os.environ['JOB_NAME'], os.environ['BUILD_NUMBER']))
+        print debug_environ['JOB_NAME']
+        print debug_environ['BUILD_NUMBER']
         
         
        
      
      
-        # wb.SaveAs(r"%s\Report_%s_Build_%s.xlsx" % (report_path, debug_environ['JOB_NAME'], debug_environ['BUILD_NUMBER']))
+        wb.SaveAs(r"%s\Report_%s_Build_%s.xlsx" % (report_path, debug_environ['JOB_NAME'], debug_environ['BUILD_NUMBER']))
         
-        # wb.Close()
-        # # xlApp.Close()
-        # if xlApp.Workbooks.Count == 0:
-            # xlApp.Quit()
-        # del xlApp
-    # except Exception, e:
-        # traceback.print_exc()
-        # print "\n---->Problem: Fail to generate excel report !!!\n"
+        wb.Close()
+        # xlApp.Close()
+        if xlApp.Workbooks.Count == 0:
+            xlApp.Quit()
+        del xlApp
+    except Exception, e:
+        traceback.print_exc()
+        print "\n---->Problem: Fail to generate excel report !!!\n"
 
-       # #NOTE excel generate report end
-
+       #NOTE excel generate report end
+    '''
     try:
         temp_firmware_name = os.environ[
             'Firmware_Under_Tested'].split("\\")[-1]
@@ -1653,7 +1778,7 @@ def run(test_case_pool_dict):
         memo_purpose = "Official "
     else:
         memo_purpose = "1-Click-Checking"
-
+'''
     print "\n\n*********************************************************************************************************************"
     print "                           One Click Test System End"
     print "\n"

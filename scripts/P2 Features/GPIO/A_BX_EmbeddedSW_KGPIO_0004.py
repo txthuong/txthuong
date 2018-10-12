@@ -83,7 +83,9 @@ try:
     print "%s: Check if GPIO level can be changed as the external input level if it is configured as Input and internal pull up resistor" % test_ID
     print "***************************************************************************************************************"
 
-    gpio = [16, 17, 27]
+    gpio = [2]
+
+    wx.MessageBox('Connect GPIO %s of 2 mdoules accordantly then click "OK"' % gpio, 'Info',wx.OK)
 
     for io in gpio:
         print '\nOn DUT'
@@ -93,10 +95,8 @@ try:
 
         print "\nStep 2: Read input value of GPIO %s" % io
         SagSendAT(uart_com, 'AT+KGPIO=%s,2\r' % io)
-        SagWaitnMatchResp(uart_com, ['+KGPIO: %s,1\r\n' % io], 2000)
+        SagWaitnMatchResp(uart_com, ['\r\n+KGPIO: %s,0\r\n' % io], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
-
-    wx.MessageBox('Use jumper to connect approximate GPIO to AUX1 module then click "OK"', 'Info',wx.OK)
 
     for io in gpio:
         print '\nOn AUX1'
@@ -111,7 +111,7 @@ try:
         print '\nOn DUT'
         print "Step 5: Read value of GPIO %s" % io
         SagSendAT(uart_com, 'AT+KGPIO=%s,2\r' % io)
-        SagWaitnMatchResp(uart_com, ['+KGPIO: %s,0\r\n' % io], 2000)
+        SagWaitnMatchResp(uart_com, ['\r\n+KGPIO: %s,0\r\n' % io], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
         print '\nOn AUX1'
@@ -122,7 +122,7 @@ try:
         print '\nOn DUT'
         print "Step 7: Read value of GPIO %s" % io
         SagSendAT(uart_com, 'AT+KGPIO=%s,2\r' % io)
-        SagWaitnMatchResp(uart_com, ['+KGPIO: %s,1\r\n' % io], 2000)
+        SagWaitnMatchResp(uart_com, ['\r\n+KGPIO: %s,1\r\n' % io], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
         print '\nOn AUX1'
@@ -133,7 +133,7 @@ try:
         print '\nOn DUT'
         print "Step 9: Read value of GPIO %s" % io
         SagSendAT(uart_com, 'AT+KGPIO=%s,2\r' % io)
-        SagWaitnMatchResp(uart_com, ['+KGPIO: %s,0\r\n' % io], 2000)
+        SagWaitnMatchResp(uart_com, ['\r\n+KGPIO: %s,0\r\n' % io], 2000)
         SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
 
     print "\nTest Steps completed"

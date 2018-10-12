@@ -121,7 +121,7 @@ try:
     for qos in [0, 1, 2]:
         for retained in [0, 1]:
             SagSendAT(uart_com, 'AT+KMQTTPUB=1,"%s",%s,%s,"%s"\r' % (topic, qos, retained, message))
-            SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 2000)
+            SagWaitnMatchResp(uart_com, ['\r\nOK\r\n'], 4000)
 
     print "\nStep 9: Check +KMQTTPUB write command with not configured session id"
     session_id = [0, 2, 65535]

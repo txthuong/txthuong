@@ -53,6 +53,13 @@ try:
     SagSendAT(aux1_com, "ATI3\r")
     SagWaitnMatchResp(aux1_com, ['*\r\nOK\r\n'], 2000)
 
+    print "\nGet default AP configure"
+    SagSendAT(aux1_com, "AT+SRWAPCFG?\r")
+    resp = SagWaitResp(aux1_com, ['*\r\nOK\r\n'], 2000)
+    wifi_ssid = resp.split('"')[1]
+    wifi_password = resp.split('"')[3]
+    SagMatchResp(resp, ['\r\n+SRWAPCFG: "%s","%s",3,1,0,100\r\nOK\r\n' % (wifi_ssid, wifi_password)])
+
 except Exception, e:
     print "***** Test environment check fails !!!*****"
     print type(e)
@@ -82,8 +89,6 @@ try:
     print "%s: Check BX module should auto-connect to Wifi of other Euler module (hidden SSID) when it's powered on" % test_ID
     print "***********************************************************************************************************************"
 
-    wifi_ssid = 'Euler_Testing'
-    wifi_password = '123456789'
     wifi_dhcp_gateway = '192.168.100.1'
 
     print "\nStep 1: Configures module AUX as Access Point mode"
@@ -138,6 +143,8 @@ except Exception, err_msg :
     print Exception, err_msg
     SagSendAT(uart_com, 'AT&F\r')
     SagWaitnMatchResp(uart_com, ['*\r\nREADY\r\n'], 2000)
+    SagSendAT(aux1_com, 'AT&F\r')
+    SagWaitnMatchResp(aux1_com, ['*\r\nREADY\r\n'], 2000)
 
 #Print test result
 PRINT_TEST_RESULT(test_ID, VarGlobal.statOfItem)

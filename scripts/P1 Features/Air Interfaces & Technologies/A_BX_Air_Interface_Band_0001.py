@@ -20,7 +20,6 @@ try:
     # UART Initialization
     print "\nOpen AT Command port"
     uart_com = SagOpen(uart_com, 115200, 8, "N", 1, "None")
-    SagWaitnMatchResp(uart_com, ['\r\nREADY\r\n'], 3000)
 
     # Display DUT information
     print "\nDisplay DUT information"
@@ -73,7 +72,8 @@ try:
     
     print "\nStep 2: Use module to scan SSID\n"
     SagSendAT(uart_com, "AT+SRWSTASCN\r")
-    SagWaitnMatchResp(uart_com, ['*+SRWSTASCN: *,*,*,"%s","%s"\r\n' % (wifi_ssid, wifi_mac_addr)], 10000)
+    if SagWaitnMatchResp(uart_com, ['*+SRWSTASCN: *,*,*,"%s","%s"\r\n' % (wifi_ssid, wifi_mac_addr)], 10000):
+        print '\nFound test AP: "%s"\n' % wifi_ssid
     SagWaitnMatchResp(uart_com, ['*\r\nOK\r\n'], 10000)
     
     print "\nStep 3: Configure module as Station mode\n"
